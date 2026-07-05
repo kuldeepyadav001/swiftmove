@@ -16,7 +16,7 @@ import {
 import TrackingMap from "./components/TrackingMap";
 import ProfileEditor from "./components/ProfileEditor";
 import { useWebSocket } from "./hooks/useWebSocket";
-import { useLocationSimulator } from "./hooks/useLocationSimulator";
+import { useRealGPS } from "./hooks/useLocationSimulator";
 import {
   NotificationBell,
   NotificationToasts,
@@ -1102,7 +1102,7 @@ function DriverHome({ user }) {
     });
   }, [activeBooking, user, sendLocation]);
 
-  useLocationSimulator(activeBooking, online && !!activeBooking, handleLocationUpdate);
+  useRealGPS( online && !!activeBooking, handleLocationUpdate);
 
   if (loading)
     return (

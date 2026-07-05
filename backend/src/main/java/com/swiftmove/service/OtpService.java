@@ -54,6 +54,51 @@ public class OtpService {
     // ── Step 2: Verify OTP ────────────────────────────────────────────────────
     public Map<String, String> verifyOtp(String email, String otp) {
 
+        // Important: do NOT mark the OTP as used here.
+        // The frontend first calls /verify-otp, then calls /reset-password with
+        // the same OTP. If we consume it during verification, reset-password fails.
+        validateOtp(email, otp);
+
+        return Map.of(
+            "message", "OTP verified successfully",
+            "email",   email
+        );
+    }
+
+    // ── Step 3: Reset password ────────────────────────────────────────────────
+    public Map<String, String> resetPassword(String email, String otp, String newPassword) {
+
+        // Validate OTP again at the final sensitive action.
+        validateOtp(email, otp);
+
+        // Validate password
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new RuntimeException("Password must be at least 8 characters.");
+        }
+
+        // Update password
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found."));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // Consume / clean up OTPs only after successful password change
+        otpRepository.deleteAllByEmail(email);
+
+        log.info("Password reset for {}", email);
+
+        return Map.of("message", "Password reset successfully. You can now log in.");
+    }
+
+    private OtpToken validateOtp(String email, String otp) {
+        if (email == null || email.isBlank()) {
+            throw new RuntimeException("Email is required.");
+        }
+        if (otp == null || otp.isBlank()) {
+            throw new RuntimeException("OTP is required.");
+        }
+
         OtpToken token = otpRepository
                 .findTopByEmailAndUsedFalseOrderByCreatedAtDesc(email)
                 .orElseThrow(() -> new RuntimeException(
@@ -68,40 +113,7 @@ public class OtpService {
             throw new RuntimeException("Incorrect OTP. Please try again.");
         }
 
-        // Mark as used
-        token.setUsed(true);
-        otpRepository.save(token);
-
-        return Map.of(
-            "message", "OTP verified successfully",
-            "email",   email
-        );
-    }
-
-    // ── Step 3: Reset password ────────────────────────────────────────────────
-    public Map<String, String> resetPassword(String email, String otp, String newPassword) {
-
-        // Verify OTP first
-        verifyOtp(email, otp);
-
-        // Validate password
-        if (newPassword == null || newPassword.length() < 8) {
-            throw new RuntimeException("Password must be at least 8 characters.");
-        }
-
-        // Update password
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found."));
-
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
-
-        // Clean up OTPs
-        otpRepository.deleteAllByEmail(email);
-
-        log.info("Password reset for {}", email);
-
-        return Map.of("message", "Password reset successfully. You can now log in.");
+        return token;
     }
 
     // ── Helper ────────────────────────────────────────────────────────────────

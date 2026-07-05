@@ -1,7 +1,7 @@
 // src/api/authApi.js
 // All calls go through Vite's proxy → http://localhost:8080
 
-const BASE = "/api/auth";
+const BASE = `${import.meta.env.VITE_API_BASE || ""}/api/auth`;
 
 async function request(url, body) {
   const res = await fetch(url, {

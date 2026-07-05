@@ -1,7 +1,7 @@
 // src/api/bookingApi.js
 import { authHeaders } from "./authApi";
 
-const BASE = "/api/bookings";
+const BASE = `${import.meta.env.VITE_API_BASE || ""}/api/bookings`;
 
 // ── Shipper ───────────────────────────────────────────────────────────────────
 
