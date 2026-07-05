@@ -25,13 +25,13 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
 
-    // ── Add these to application.properties when you get your Razorpay keys ──
+    
     // razorpay.key.id=rzp_test_XXXXXXXXXXXXXXXX
     // razorpay.key.secret=XXXXXXXXXXXXXXXXXXXXXXXX
-   @Value("${razorpay.key.id}")
+   @Value("${razorpay.key.id:NOT_SET}")
     private String razorpayKeyId;
 
-    @Value("${razorpay.key.secret}")
+    @Value("${razorpay.key.secret:NOT_SET}")
     private String razorpayKeySecret;
 
     // ── Create Razorpay order (prepaid flow) ──────────────────────────────────
