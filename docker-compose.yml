@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: swiftmove-backend
+    ports:
+      - "8080:8080"
+    # Create backend/.env with mongodb_uri, jwt_secret, jwt_expiration, etc.
+    env_file:
+      - ./backend/.env
+    environment:
+      SERVER_PORT: 8080
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: swiftmove-frontend
+    ports:
+      - "5173:80"
+    environment:
+      # Used by frontend/nginx.conf.template inside the container.
+      BACKEND_URL: http://backend:8080
+    depends_on:
+      - backend
+    restart: unless-stopped

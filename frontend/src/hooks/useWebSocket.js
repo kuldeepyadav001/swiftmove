@@ -6,8 +6,11 @@ export function useWebSocket() {
   const subscriptionsRef = useRef({});
 
   useEffect(() => {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const defaultWsUrl = `${protocol}://${window.location.host}/ws`;
+    const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
     const client = new Client({
-      brokerURL:  import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws",
+      brokerURL: wsUrl,
       reconnectDelay: 5000,
       debug: () => {},
     });
@@ -64,24 +67,28 @@ export function useWebSocket() {
   // Convenience wrappers kept for backward compatibility
   const subscribeToBooking = useCallback(
     (bookingId, onMessage) =>
-      subscribe(`booking-${bookingId}`, `/topic/booking/${bookingId}`, onMessage),
-    [subscribe]
+      subscribe(
+        `booking-${bookingId}`,
+        `/topic/booking/${bookingId}`,
+        onMessage,
+      ),
+    [subscribe],
   );
 
   const unsubscribeFromBooking = useCallback(
     (bookingId) => unsubscribe(`booking-${bookingId}`),
-    [unsubscribe]
+    [unsubscribe],
   );
 
   // Driver: subscribe to new-job broadcasts
   const subscribeToNewJobs = useCallback(
     (onMessage) => subscribe("new-jobs", "/topic/jobs/new", onMessage),
-    [subscribe]
+    [subscribe],
   );
 
   const unsubscribeFromNewJobs = useCallback(
     () => unsubscribe("new-jobs"),
-    [unsubscribe]
+    [unsubscribe],
   );
 
   return {
