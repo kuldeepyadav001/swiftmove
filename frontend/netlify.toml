@@ -2,13 +2,13 @@
 # Replace YOUR-RAILWAY-BACKEND.up.railway.app with your real Railway backend domain.
 
 [build]
-  command = "npm ci && npm run build"
+  command = "npm install && npm run build"
   publish = "dist"
 
 # API proxy: keeps frontend code using /api/... unchanged.
 [[redirects]]
   from = "/api/*"
-  to = "https://YOUR-RAILWAY-BACKEND.up.railway.app/api/:splat"
+  to = "https://swiftmove-production-5a95.up.railway.app/api/:splat"
   status = 200
   force = true
 
