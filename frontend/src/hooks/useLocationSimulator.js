@@ -89,8 +89,8 @@ export function useRealGPS(isActive, onLocationUpdate) {
           speed: (pos.coords.speed || 0) * 3.6, // m/s to km/h
         });
       },
-      (err) => console.error("GPS error:", err),
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      (err) => console.error("GPS unavailable:", err.message),
+      { enableHighAccuracy: false, maximumAge: 10000, timeout: 30000 }
     );
 
     return () => {

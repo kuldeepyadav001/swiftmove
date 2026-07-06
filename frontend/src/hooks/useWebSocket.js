@@ -12,6 +12,8 @@ export function useWebSocket() {
     const client = new Client({
       brokerURL: wsUrl,
       reconnectDelay: 5000,
+      heartbeatIncoming: 10000,    // ✅ add this
+  heartbeatOutgoing: 10000,  
       debug: () => {},
     });
 

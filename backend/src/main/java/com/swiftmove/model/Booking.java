@@ -22,6 +22,8 @@ import java.util.List;
 @Document(collection = "bookings")
 public class Booking {
 
+
+
     @Id
     private String id;
 
@@ -52,6 +54,7 @@ public class Booking {
     private long   totalFare;     // Amount paid by shipper
     private long   driverCut;     // Amount earned by driver
     private long   appCut;        // Commission kept by SwiftMove
+    private double commissionPct;
     private String fareBreakdown; // JSON/String detail of fare calculation
 
     // --- Status & Lifecycle ---

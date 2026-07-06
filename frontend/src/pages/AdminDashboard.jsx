@@ -4,6 +4,7 @@ import { getAdminStats, getAllUsers, getAllBookingsAdmin, deleteUser } from "../
 import { clearSession } from "../api/authApi";
 import RateCardAdmin from "../components/RateCardAdmin";
 import KycAdmin from "../components/KycAdmin";
+import BookingDetailModal from "../components/BookingDetailModal";  // ✅ already present
 // ── Icons ─────────────────────────────────────────────────────────────────────
 const Icons = {
   Shield: () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
@@ -81,6 +82,7 @@ export default function AdminDashboard({ user, onLogout }) {
   const [loading, setLoading]   = useState(true);
   const [userFilter, setUserFilter] = useState("ALL");
   const [search, setSearch]     = useState("");
+  const [selectedBooking, setSelectedBooking] = useState(null);  // ✅ already present
 
   useEffect(() => {
     loadAll();
@@ -225,7 +227,9 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
                 <div className="divide-y divide-slate-100">
                   {bookings.slice(0, 5).map(b => (
-                    <div key={b.id} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors">
+                    // ✅ made clickable
+                    <div key={b.id} onClick={() => setSelectedBooking(b)}
+                      className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
                       <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 flex-shrink-0">
                         <Icons.Package />
                       </div>
@@ -306,7 +310,9 @@ export default function AdminDashboard({ user, onLogout }) {
                 </div>
                 <div className="divide-y divide-slate-100">
                   {bookings.map(b => (
-                    <div key={b.id} className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors">
+                    // ✅ made clickable
+                    <div key={b.id} onClick={() => setSelectedBooking(b)}
+                      className="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer">
                       <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 flex-shrink-0 mt-0.5">
                         <Icons.Package />
                       </div>
@@ -337,10 +343,13 @@ export default function AdminDashboard({ user, onLogout }) {
               </div>
             </div>
           )}
- {!loading && tab === "rates" && <RateCardAdmin />}
- {!loading && tab === "kyc" && <KycAdmin />}
+          {!loading && tab === "rates" && <RateCardAdmin />}
+          {!loading && tab === "kyc" && <KycAdmin />}
         </main>
       </div>
+
+      {/* ✅ Modal render at the very end, just before the outer closing </div> */}
+      <BookingDetailModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} />
     </div>
   );
 }

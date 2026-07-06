@@ -5,6 +5,7 @@ import com.swiftmove.model.User;
 import com.swiftmove.model.enums.Role;
 import com.swiftmove.repository.BookingRepository;
 import com.swiftmove.repository.UserRepository;
+import com.swiftmove.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +20,7 @@ public class AdminController {
 
     private final UserRepository    userRepository;
     private final BookingRepository bookingRepository;
+    private final BookingService    bookingService;   // ← NEW: inject service
 
     // GET /api/admin/stats — dashboard overview numbers
     @GetMapping("/stats")
@@ -32,7 +34,7 @@ public class AdminController {
         long delivered     = bookingRepository.countByStatus("DELIVERED");
         long cancelled     = bookingRepository.countByStatus("CANCELLED");
 
-        // Total revenue = sum of all delivered booking fares
+        // Total revenue = sum of app commission from delivered bookings
         long totalRevenue = bookingRepository
                 .findByStatusOrderByCreatedAtDesc("DELIVERED")
                 .stream()
@@ -88,5 +90,13 @@ public class AdminController {
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable String id) {
         userRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "User deleted"));
+    }
+
+    // ── NEW: POST /api/admin/bookings/backfill-splits ──────────────────────
+    // Fixes old bookings that were saved with driverCut=0 and appCut=0.
+    // Uses current rate card commission % to compute the split retroactively.
+    @PostMapping("/bookings/backfill-splits")
+    public ResponseEntity<Map<String, Integer>> backfillSplits() {
+        return ResponseEntity.ok(bookingService.backfillFareSplits());
     }
 }
