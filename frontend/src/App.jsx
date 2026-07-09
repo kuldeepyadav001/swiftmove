@@ -962,6 +962,12 @@ function DeliveryHandoffPanel({ booking, onUpdate }) {
     try {
       const updated = await requestDelivery(booking.id, images);
       onUpdate(updated); // Refresh local state
+      if (updated.otpEmailSent === false) {
+  alert(
+    "Heads up: the OTP email couldn't be delivered to the shipper. " +
+    "Ask them to open the SwiftMove app → Orders, where the same code is shown."
+  );
+}
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
@@ -979,9 +985,16 @@ function DeliveryHandoffPanel({ booking, onUpdate }) {
   const handleResend = async () => {
     setLoading(true); setError("");
     try {
-      const updated = await resendDeliveryOtp(booking.id);
-      alert("New OTP sent to shipper!");
-      onUpdate(updated);
+   const updated = await resendDeliveryOtp(booking.id);
+if (updated.otpEmailSent === false) {
+  alert(
+    "New OTP generated, but the email couldn't be delivered. " +
+    "Ask the shipper to check the code on their Orders page in the app."
+  );
+} else {
+  alert("New OTP sent to shipper!");
+}
+onUpdate(updated);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   };
@@ -1049,7 +1062,11 @@ function DriverHome({ user }) {
     Promise.all([getPendingJobs(), getDriverBookings()])
       .then(([pJobs, dJobs]) => {
         setPending(pJobs);
-        setMyActive(dJobs.filter((b) => b.status === "ASSIGNED" || b.status === "IN_TRANSIT"));
+   setMyActive(dJobs.filter((b) =>
+  b.status === "ASSIGNED" ||
+  b.status === "IN_TRANSIT" ||
+  b.status === "DELIVERED_PENDING_CONFIRMATION"
+));
         setMyDone(dJobs.filter((b) => b.status === "DELIVERED"));
       })
       .catch(console.error)

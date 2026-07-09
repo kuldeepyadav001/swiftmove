@@ -22,10 +22,10 @@ import java.util.Map;
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final UserRepository    userRepository;
+    private final UserRepository userRepository;
     private final LocationController locationController;
     private final EmailService emailService;
-    private final DynamicFareService dynamicFareService;   // ← NEW
+    private final DynamicFareService dynamicFareService; // ← NEW
 
     // --- CORE LIFECYCLE METHODS ---
 
@@ -33,10 +33,10 @@ public class BookingService {
         User shipper = userRepository.findByEmail(shipperEmail)
                 .orElseThrow(() -> new RuntimeException("Shipper not found"));
 
-        String pickup      = (String) req.get("pickup");
-        String drop        = (String) req.get("drop");
+        String pickup = (String) req.get("pickup");
+        String drop = (String) req.get("drop");
         String vehicleType = (String) req.get("vehicleType");
-        int waitingMins    = (int) toLong(req.getOrDefault("estimatedWaitingMins", 0));
+        int waitingMins = (int) toLong(req.getOrDefault("estimatedWaitingMins", 0));
 
         // ── 1. Authoritatively recalculate fare on the server ──────────────
         // Never trust the client for money. Recompute using the same service
@@ -53,7 +53,7 @@ public class BookingService {
         long clientTotal = toLong(req.get("totalFare"));
         if (clientTotal > 0 && Math.abs(clientTotal - fare.getTotalFare()) > 50) {
             log.warn("Fare mismatch! client={} server={} — using server value",
-                     clientTotal, fare.getTotalFare());
+                    clientTotal, fare.getTotalFare());
         }
 
         // ── 3. Build booking with the SERVER-computed split ────────────────
@@ -88,12 +88,18 @@ public class BookingService {
 
     public Booking accept(String bookingId, String driverEmail) {
         Booking b = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
-        User driver = userRepository.findByEmail(driverEmail).orElseThrow(() -> new RuntimeException("Driver not found"));
+        User driver = userRepository.findByEmail(driverEmail)
+                .orElseThrow(() -> new RuntimeException("Driver not found"));
 
-        if (!"PENDING".equals(b.getStatus())) throw new RuntimeException("Job no longer available");
+        if (!"PENDING".equals(b.getStatus()))
+            throw new RuntimeException("Job no longer available");
 
-        b.setDriverUserId(driver.getId()); b.setDriverName(driver.getName()); b.setDriverEmail(driver.getEmail());
-        b.setStatus("ASSIGNED"); b.setAcceptedAt(LocalDateTime.now()); b.setUpdatedAt(LocalDateTime.now());
+        b.setDriverUserId(driver.getId());
+        b.setDriverName(driver.getName());
+        b.setDriverEmail(driver.getEmail());
+        b.setStatus("ASSIGNED");
+        b.setAcceptedAt(LocalDateTime.now());
+        b.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepository.save(b);
         locationController.notifyStatusUpdate(saved.getId(), "ASSIGNED", driver.getId(), driver.getName());
@@ -104,7 +110,8 @@ public class BookingService {
 
     public Booking requestDelivery(String bookingId, List<String> images, String driverEmail) {
         Booking b = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
-        if (!driverEmail.equals(b.getDriverEmail())) throw new RuntimeException("Unauthorized Access");
+        if (!driverEmail.equals(b.getDriverEmail()))
+            throw new RuntimeException("Unauthorized Access");
 
         String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
         b.setStatus("DELIVERED_PENDING_CONFIRMATION");
@@ -115,8 +122,15 @@ public class BookingService {
         b.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepository.save(b);
-        emailService.sendDeliveryOtp(b.getShipperEmail(), b.getShipperName(), otp, b.getId());
-        locationController.notifyStatusUpdate(saved.getId(), saved.getStatus(), saved.getDriverUserId(), saved.getDriverName());
+
+        boolean emailSent = emailService.sendDeliveryOtp(b.getShipperEmail(), b.getShipperName(), otp, b.getId());
+        if (!emailSent) {
+            log.warn("Delivery OTP email FAILED to send for booking {} (shipper: {}).", b.getId(), b.getShipperEmail());
+        }
+        saved.setOtpEmailSent(emailSent);
+
+        locationController.notifyStatusUpdate(saved.getId(), saved.getStatus(), saved.getDriverUserId(),
+                saved.getDriverName());
         return saved;
     }
 
@@ -131,8 +145,12 @@ public class BookingService {
         b.setDeliveryOtpResendCount(b.getDeliveryOtpResendCount() + 1);
 
         Booking saved = bookingRepository.save(b);
-        emailService.sendDeliveryOtp(b.getShipperEmail(), b.getShipperName(), newOtp, b.getId());
-        return saved;
+boolean emailSent = emailService.sendDeliveryOtp(b.getShipperEmail(), b.getShipperName(), newOtp, b.getId());
+if (!emailSent) {
+    log.warn("Resend of delivery OTP email FAILED for booking {} (shipper: {}).", b.getId(), b.getShipperEmail());
+}
+saved.setOtpEmailSent(emailSent);
+return saved;
     }
 
     public Booking verifyDeliveryOtp(String bookingId, String userOtp, String driverEmail) {
@@ -150,7 +168,8 @@ public class BookingService {
         b.setUpdatedAt(LocalDateTime.now());
 
         Booking saved = bookingRepository.save(b);
-        locationController.notifyStatusUpdate(saved.getId(), "DELIVERED", saved.getDriverUserId(), saved.getDriverName());
+        locationController.notifyStatusUpdate(saved.getId(), "DELIVERED", saved.getDriverUserId(),
+                saved.getDriverName());
         return saved;
     }
 
@@ -169,7 +188,8 @@ public class BookingService {
 
     public Booking cancel(String bookingId, String shipperEmail) {
         Booking b = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
-        if (!shipperEmail.equals(b.getShipperEmail())) throw new RuntimeException("Unauthorized");
+        if (!shipperEmail.equals(b.getShipperEmail()))
+            throw new RuntimeException("Unauthorized");
         b.setStatus("CANCELLED");
         return bookingRepository.save(b);
     }
@@ -184,15 +204,20 @@ public class BookingService {
         return bookingRepository.findByDriverUserIdOrderByCreatedAtDesc(u.getId());
     }
 
-    public List<Booking> getPendingJobs() { return bookingRepository.findByStatusOrderByCreatedAtDesc("PENDING"); }
-    public List<Booking> getAllBookings() { return bookingRepository.findAllByOrderByCreatedAtDesc(); }
+    public List<Booking> getPendingJobs() {
+        return bookingRepository.findByStatusOrderByCreatedAtDesc("PENDING");
+    }
+
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAllByOrderByCreatedAtDesc();
+    }
 
     // ── BACKFILL: Fix old bookings that were saved with driverCut=0, appCut=0 ──
     public Map<String, Integer> backfillFareSplits() {
         List<Booking> broken = bookingRepository.findAll().stream()
                 .filter(b -> b.getTotalFare() > 0
-                          && b.getDriverCut() == 0
-                          && b.getAppCut() == 0)
+                        && b.getDriverCut() == 0
+                        && b.getAppCut() == 0)
                 .toList();
 
         int fixed = 0;
@@ -202,7 +227,7 @@ public class BookingService {
                 RateCard rc = dynamicFareService.getRateCard(city, b.getVehicleType());
                 double commPct = rc.getCommissionPct();
 
-                long appCut    = Math.round(b.getTotalFare() * commPct);
+                long appCut = Math.round(b.getTotalFare() * commPct);
                 long driverCut = b.getTotalFare() - appCut;
 
                 b.setAppCut(appCut);
@@ -220,19 +245,32 @@ public class BookingService {
     }
 
     private String detectCityFromPickup(String pickup) {
-        if (pickup == null) return "kanpur";
+        if (pickup == null)
+            return "kanpur";
         return pickup.toLowerCase().split(",")[0].trim();
     }
 
     private long toLong(Object val) {
-        if (val == null) return 0;
-        if (val instanceof Number) return ((Number) val).longValue();
-        try { return Long.parseLong(val.toString()); } catch (Exception e) { return 0; }
+        if (val == null)
+            return 0;
+        if (val instanceof Number)
+            return ((Number) val).longValue();
+        try {
+            return Long.parseLong(val.toString());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private double toDouble(Object val) {
-        if (val == null) return 0;
-        if (val instanceof Number) return ((Number) val).doubleValue();
-        try { return Double.parseDouble(val.toString()); } catch (Exception e) { return 0; }
+        if (val == null)
+            return 0;
+        if (val instanceof Number)
+            return ((Number) val).doubleValue();
+        try {
+            return Double.parseDouble(val.toString());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 }

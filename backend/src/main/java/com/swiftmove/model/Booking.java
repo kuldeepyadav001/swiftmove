@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
-
+import org.springframework.data.annotation.Transient;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -21,9 +21,6 @@ import java.util.List;
 @AllArgsConstructor
 @Document(collection = "bookings")
 public class Booking {
-
-
-
     @Id
     private String id;
 
@@ -84,4 +81,7 @@ public class Booking {
     private LocalDateTime acceptedAt;
     private LocalDateTime deliveredAt; // Set only after successful OTP verification
     private LocalDateTime updatedAt;
+  
+    @Transient
+    private Boolean otpEmailSent;
 }

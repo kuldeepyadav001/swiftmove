@@ -23,23 +23,35 @@ public class EmailService {
     @Value("${app.name:SwiftMove}")
     private String appName;
 
-    @Async
-    public void sendEmail(String to, String subject, String htmlBody) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail, appName);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            mailSender.send(message);
-            log.info("Email sent to {}: {}", to, subject);
-        } catch (Exception e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
-        }
+@Async
+public void sendEmail(String to, String subject, String htmlBody) {
+    try {
+        doSend(to, subject, htmlBody);
+        log.info("Email sent to {}: {}", to, subject);
+    } catch (Exception e) {
+        log.error("Failed to send email to {}: {}", to, e.getMessage());
     }
-
-    public void sendDeliveryOtp(String to, String shipperName, String otp, String bookingId) {
+}
+private void doSend(String to, String subject, String htmlBody) throws Exception {
+    MimeMessage message = mailSender.createMimeMessage();
+    MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    helper.setFrom(fromEmail, appName);
+    helper.setTo(to);
+    helper.setSubject(subject);
+    helper.setText(htmlBody, true);
+    mailSender.send(message);
+}
+public boolean sendEmailSync(String to, String subject, String htmlBody) {
+    try {
+        doSend(to, subject, htmlBody);
+        log.info("Email sent to {}: {}", to, subject);
+        return true;
+    } catch (Exception e) {
+        log.error("Failed to send email to {}: {}", to, e.getMessage());
+        return false;
+    }
+}
+    public boolean sendDeliveryOtp(String to, String shipperName, String otp, String bookingId) {
         String subject = "Delivery OTP for Booking " + bookingId;
         String body = emailTemplate(
             "Confirm Delivery",
@@ -52,8 +64,10 @@ public class EmailService {
             "<p style='color:#ef4444;font-size:12px;margin-top:10px'>Valid for 30 minutes</p></div>",
             "If there is an issue, do not share the OTP and report it in the app."
         );
-        sendEmail(to, subject, body);
+         return sendEmailSync(to, subject, body);
     }
+
+
 
     public void sendOtp(String to, String name, String otp) {
         String subject = "Your SwiftMove password reset OTP";
