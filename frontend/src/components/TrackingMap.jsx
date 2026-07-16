@@ -2,6 +2,7 @@
 // Leaflet.js map with real-time driver location from WebSocket
 
 import { useEffect, useRef } from "react";
+import { loadLeaflet } from "../utils/leaflet";
 
 export default function TrackingMap({ booking, driverLocation }) {
   const mapRef = useRef(null);
@@ -11,26 +12,6 @@ export default function TrackingMap({ booking, driverLocation }) {
   const trailRef = useRef([]);
 
   useEffect(() => {
-    // Load Leaflet CSS dynamically
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    // Load Leaflet JS dynamically
-    const loadLeaflet = () => {
-      return new Promise((resolve) => {
-        if (window.L) { resolve(window.L); return; }
-        const script = document.createElement("script");
-        script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-        script.onload = () => resolve(window.L);
-        document.head.appendChild(script);
-      });
-    };
-
     loadLeaflet().then((L) => {
       if (mapInstanceRef.current || !mapRef.current) return;
 

@@ -1,10 +1,10 @@
 // src/api/authApi.js
 // All calls go through Vite's proxy → http://localhost:8080
-
+import { apiFetch } from "./apiFetch";
 const BASE = `${import.meta.env.VITE_API_BASE || ""}/api/auth`;
 
 async function request(url, body) {
-  const res = await fetch(url, {
+ const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -27,6 +27,7 @@ async function request(url, body) {
   }
 
   return data;
+
 }
 
 export async function registerUser({ name, email, phone, password, role }) {
@@ -61,25 +62,3 @@ export function saveSession(data) {
   );
 }
 
-// Load existing session on page reload
-export function loadSession() {
-  const token = localStorage.getItem("swiftmove_token");
-  const user = localStorage.getItem("swiftmove_user");
-  if (!token || !user) return null;
-  return JSON.parse(user);
-}
-
-// Clear on logout
-export function clearSession() {
-  localStorage.removeItem("swiftmove_token");
-  localStorage.removeItem("swiftmove_user");
-}
-
-// Attach token to any authenticated API call
-export function authHeaders() {
-  const token = localStorage.getItem("swiftmove_token");
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-}

@@ -1,6 +1,6 @@
 // src/hooks/useNotifications.js
 import { useState, useEffect, useCallback, useRef } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 export function useNotifications(user, wsClient) {
   const [notifications, setNotifications] = useState([]);

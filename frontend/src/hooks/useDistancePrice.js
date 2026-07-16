@@ -3,7 +3,7 @@
 // Falls back gracefully when ORS key not set
 
 import { useState, useEffect, useRef } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 export function useDistancePrice(pickup, drop, vehicleType) {
   const [fare, setFare]       = useState(null);

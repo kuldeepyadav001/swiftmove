@@ -2,7 +2,7 @@
 // Editable profile form — saves to MongoDB via PUT /api/user/profile
 
 import { useState } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 export default function ProfileEditor({ user, onUpdate }) {
   const [editing, setEditing]   = useState(false);

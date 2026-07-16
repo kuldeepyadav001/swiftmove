@@ -1,7 +1,7 @@
 // src/pages/AdminDashboard.jsx
 import { useState, useEffect } from "react";
 import { getAdminStats, getAllUsers, getAllBookingsAdmin, deleteUser } from "../api/bookingApi";
-import { clearSession } from "../api/authApi";
+import { clearSession } from "../api/sessionStorage";
 import RateCardAdmin from "../components/RateCardAdmin";
 import KycAdmin from "../components/KycAdmin";
 import BookingDetailModal from "../components/BookingDetailModal";  // ✅ already present
