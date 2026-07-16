@@ -6,13 +6,16 @@ import {
   useCallback,
 } from "react";
 import FareEstimate from "./components/FareEstimate";
+import LocationPicker from "./components/LocationPicker";
+import DriverRouteMap from "./components/DriverRouteMap";
 import {
   registerUser,
-  loginUser,
-  saveSession,
+  loginUser
+} from "./api/authApi";
+ import{saveSession,
   loadSession,
   clearSession,
-} from "./api/authApi";
+} from "./api/sessionStorage";
 import TrackingMap from "./components/TrackingMap";
 import ProfileEditor from "./components/ProfileEditor";
 import { useWebSocket } from "./hooks/useWebSocket";
@@ -588,6 +591,7 @@ function ShipperBooking({ user, goHome }) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     pickup: "", drop: "", goodsType: "", weight: "", vehicle: "", date: "now",
+    pickupLat: null, pickupLng: null, dropLat: null, dropLng: null,
   });
   const [fareData, setFareData] = useState(null);
   const [booked, setBooked]     = useState(null);
@@ -595,6 +599,8 @@ function ShipperBooking({ user, goHome }) {
 const [showPayment, setShowPayment] = useState(false);
 const [bookedData, setBookedData]   = useState(null);
   const up = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const setLoc = (prefix) => ({ address, lat, lng }) =>
+    setForm((f) => ({ ...f, [prefix]: address, [`${prefix}Lat`]: lat, [`${prefix}Lng`]: lng }));
 
   const vehicles = [
   { id:"bike",         label:"Bike (2-Wheeler)",   cap:"Up to 20 kg",   price:"from ₹60"  },
@@ -610,6 +616,10 @@ const handleBook = async () => {
     const saved = await createBooking({
       pickup:        form.pickup,
       drop:          form.drop,
+      pickupLat:     form.pickupLat,
+      pickupLng:     form.pickupLng,
+      dropLat:       form.dropLat,
+      dropLng:       form.dropLng,
       goodsType:     form.goodsType,
       weight:        form.weight,
       vehicleType:   form.vehicle,
@@ -708,16 +718,20 @@ if (showPayment && bookedData) return (
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
           <h2 className="font-bold text-slate-900">Where are we going?</h2>
-          {[
-            ["pickup", "Pickup location", "e.g. Gwaltoli, Kanpur"],
-            ["drop",   "Drop location",   "e.g. Connaught Place, Delhi"],
-          ].map(([k, l, p]) => (
-            <div key={k}>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">{l}</label>
-              <input value={form[k]} onChange={(e) => up(k, e.target.value)} placeholder={p}
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm" />
-            </div>
-          ))}
+          <LocationPicker
+            label="Pickup location"
+            placeholder="Search house, street, landmark…"
+            accent="blue"
+            value={{ address: form.pickup, lat: form.pickupLat, lng: form.pickupLng }}
+            onChange={setLoc("pickup")}
+          />
+          <LocationPicker
+            label="Drop location"
+            placeholder="Search house, street, landmark…"
+            accent="amber"
+            value={{ address: form.drop, lat: form.dropLat, lng: form.dropLng }}
+            onChange={setLoc("drop")}
+          />
           <div>
             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Pickup time</label>
             <div className="flex gap-3">
@@ -786,6 +800,8 @@ if (showPayment && bookedData) return (
           {form.vehicle && (
             <FareEstimate
               pickup={form.pickup} drop={form.drop}
+              pickupLat={form.pickupLat} pickupLng={form.pickupLng}
+              dropLat={form.dropLat} dropLng={form.dropLng}
               vehicleType={form.vehicle}
               vehicleLabel={vehicles.find((v) => v.id === form.vehicle)?.label}
               onFareCalculated={(f) => {
@@ -1105,7 +1121,10 @@ function DriverHome({ user }) {
   //   } catch (e) { alert(e.message); }
   // };
 
+  const [myPosition, setMyPosition] = useState(null);
+
   const handleLocationUpdate = useCallback((pos) => {
+    setMyPosition({ lat: pos.latitude, lng: pos.longitude });
     if (!activeBooking) return;
     sendLocation({
       bookingId:  activeBooking.id,
@@ -1183,6 +1202,11 @@ function DriverHome({ user }) {
       <div className="flex gap-2"><span className="text-slate-400 w-16">Drop:</span><span className="font-medium text-slate-800">{j.drop}</span></div>
       <div className="flex gap-2"><span className="text-slate-400 w-16">Shipper:</span><span className="font-medium text-slate-800">{j.shipperName}</span></div>
     </div>
+
+    {/* Turn-by-turn style navigation to pickup (then drop once picked up) */}
+    {j.status !== "DELIVERED_PENDING_CONFIRMATION" && (
+      <DriverRouteMap booking={j} myPosition={myPosition} />
+    )}
 
     {/* THE NEW HANDOFF UI */}
     <DeliveryHandoffPanel 
@@ -1472,7 +1496,7 @@ if (showForgot) return (
             </div>
             <div className="p-8">
               <div className="flex rounded-xl bg-slate-100 p-1 mb-6">
-                {["shipper", "driver", "admin"].map((r) => (
+                {["shipper", "driver"].map((r) => (
                   <button key={r} onClick={() => setRole(r)}
                     className={`flex-1 py-2.5 rounded-lg text-sm font-bold capitalize transition-all
                       ${role === r ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>

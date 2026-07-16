@@ -37,6 +37,10 @@ public class BookingController {
     public ResponseEntity<List<Booking>> pendingJobs() {
         return ResponseEntity.ok(bookingService.getPendingJobs());
     }
+@DeleteMapping("/{id}/cancel")
+public ResponseEntity<Booking> delete(@PathVariable String id) {
+    return ResponseEntity.ok(bookingService.cancel(id, getEmail()));
+}
 
     @PutMapping("/{id}/accept")
     public ResponseEntity<Booking> accept(@PathVariable String id) {

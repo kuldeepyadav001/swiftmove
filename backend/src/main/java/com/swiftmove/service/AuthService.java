@@ -73,13 +73,12 @@ public class AuthService {
         User user = userRepository.findByEmail(req.getEmail())
             .orElseThrow(() -> new SwiftMoveException("User not found."));
 
-        if (req.getRole() != null &&
-            !user.getRole().name().equalsIgnoreCase(req.getRole().name())) {
-            throw new SwiftMoveException(
-                "This account is registered as " +
-                user.getRole().name().toLowerCase() + "."
-            );
-        }
+        // NOTE: we intentionally do NOT reject login based on a client-submitted
+        // role anymore. The login form only exposes "Shipper" / "Driver" tabs,
+        // but an admin account must still be able to log in through either one —
+        // the actual role always comes from the database (below) and the
+        // frontend routes to the correct dashboard (including the admin board)
+        // based on that authoritative value, not on what the user clicked.
 
         UserDetails ud = userDetailsService.loadUserByUsername(user.getEmail());
         String token = jwtService.generateToken(ud, user.getRole().name());

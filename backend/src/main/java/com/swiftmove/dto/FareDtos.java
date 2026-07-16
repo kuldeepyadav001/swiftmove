@@ -10,11 +10,20 @@ public class FareDtos {
     // ── Request ───────────────────────────────────────────────────────────────
     @Data
     public static class FareRequest {
-        private String pickup;         // "Kanpur"
-        private String drop;           // "Delhi"
+        private String pickup;         // "Kanpur" or full address text
+        private String drop;           // "Delhi" or full address text
         private String city;           // "kanpur" (optional, auto-detected from pickup)
         private String vehicleType;    // "tata-ace"
         private int    estimatedWaitingMins; // default 0
+
+        // Optional precise coordinates from the map picker. When both are
+        // present, DynamicFareService uses them directly instead of
+        // re-geocoding the address text — more accurate for exact
+        // house/gate-level pickup and drop points.
+        private Double pickupLat;
+        private Double pickupLng;
+        private Double dropLat;
+        private Double dropLng;
     }
 
     // ── Full breakdown response ───────────────────────────────────────────────

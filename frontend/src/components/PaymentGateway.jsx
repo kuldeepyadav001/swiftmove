@@ -1,14 +1,10 @@
-// src/components/PaymentGateway.jsx
-// Handles both Razorpay (UPI/Card) and COD payment flows
-
 import { useState, useEffect } from "react";
-import { authHeaders } from "../api/authApi";
+import { apiFetch } from "../api/apiFetch";   // <-- import your helper
 
 function formatINR(n) {
   return `₹${Number(n || 0).toLocaleString("en-IN")}`;
 }
 
-// Load Razorpay script dynamically
 function loadRazorpayScript() {
   return new Promise((resolve) => {
     if (window.Razorpay) { resolve(true); return; }
@@ -20,8 +16,8 @@ function loadRazorpayScript() {
   });
 }
 
-export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
-  const [method, setMethod]         = useState(null);   // "upi" | "card" | "cod"
+export default function PaymentGateway({ booking, user, onSuccess }) {
+  const [method, setMethod]         = useState(null);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState("");
   const [razorpayReady, setRazorpayReady] = useState(false);
@@ -31,57 +27,46 @@ export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
 
   // Check if Razorpay keys are configured
   useEffect(() => {
-    fetch("/api/payments/razorpay-ready", { headers: authHeaders() })
-      .then(r => r.json())
+    apiFetch("/api/payments/razorpay-ready")
       .then(d => setRazorpayReady(d.ready))
       .catch(() => setRazorpayReady(false))
       .finally(() => setChecking(false));
   }, []);
 
-  // ── Handle Razorpay (UPI / Card) ──────────────────────────────────────────
+  // ── Handle Razorpay ──────────────────────────────────────────
   const handleRazorpay = async (selectedMethod) => {
     setError(""); setLoading(true);
     try {
-      // 1. Load Razorpay script
       const loaded = await loadRazorpayScript();
       if (!loaded) throw new Error("Failed to load Razorpay. Check your internet connection.");
 
-      // 2. Create order on our backend
-      const res = await fetch("/api/payments/create-order", {
+      // Create order
+      const order = await apiFetch("/api/payments/create-order", {
         method: "POST",
-        headers: authHeaders(),
         body: JSON.stringify({
           bookingId: booking.id,
           amount,
           method: selectedMethod,
         }),
       });
-      const order = await res.json();
-      if (!res.ok) throw new Error(order.message || "Failed to create payment order");
 
-      // 3. Open Razorpay checkout
       const options = {
-        key:         order.keyId,
-        amount:      order.amount,
-        currency:    order.currency,
-        name:        "SwiftMove",
+        key: order.keyId,
+        amount: order.amount,
+        currency: order.currency,
+        name: "SwiftMove",
         description: `Booking ${booking.id} — ${booking.pickup} → ${booking.drop}`,
-        order_id:    order.razorpayOrderId,
-        prefill: {
-          name:  user?.name  || "",
-          email: user?.email || "",
-        },
+        order_id: order.razorpayOrderId,
+        prefill: { name: user?.name || "", email: user?.email || "" },
         theme: { color: "#1d4ed8" },
         method: selectedMethod === "upi"
-          ? { upi: true, card: false, netbanking: false, wallet: false }
-          : { upi: false, card: true, netbanking: false, wallet: false },
+          ? { upi: true, card: false }
+          : { upi: false, card: true },
 
-        // ── Success callback ──────────────────────────────────────────────
         handler: async (response) => {
           try {
-            const verifyRes = await fetch("/api/payments/verify", {
+            const verified = await apiFetch("/api/payments/verify", {
               method: "POST",
-              headers: authHeaders(),
               body: JSON.stringify({
                 razorpayOrderId:   response.razorpay_order_id,
                 razorpayPaymentId: response.razorpay_payment_id,
@@ -89,8 +74,6 @@ export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
                 bookingId: booking.id,
               }),
             });
-            const verified = await verifyRes.json();
-            if (!verifyRes.ok) throw new Error(verified.message || "Verification failed");
             onSuccess({
               method: selectedMethod,
               paymentType: "PREPAID",
@@ -102,8 +85,6 @@ export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
               response.razorpay_payment_id);
           }
         },
-
-        // ── Dismiss / failure ─────────────────────────────────────────────
         modal: {
           ondismiss: () => {
             setLoading(false);
@@ -125,17 +106,14 @@ export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
     }
   };
 
-  // ── Handle COD ────────────────────────────────────────────────────────────
+  // ── Handle COD ────────────────────────────────────────────
   const handleCod = async () => {
     setError(""); setLoading(true);
     try {
-      const res = await fetch("/api/payments/cod", {
+      await apiFetch("/api/payments/cod", {
         method: "POST",
-        headers: authHeaders(),
         body: JSON.stringify({ bookingId: booking.id, amount }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "COD setup failed");
       onSuccess({ method: "cod", paymentType: "COD", amount });
     } catch (e) {
       setError(e.message);

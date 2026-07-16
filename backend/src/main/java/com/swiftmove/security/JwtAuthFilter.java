@@ -1,6 +1,7 @@
 package com.swiftmove.security;
 
 import com.swiftmove.service.JwtService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +33,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response); return;
         }
         final String jwt = authHeader.substring(7);
-        final String email = jwtService.extractUsername(jwt);
+
+        // A bad token (expired, malformed, wrong signature, ...) is not a
+        // server error — it just means this request isn't authenticated.
+        // Swallow JwtException here and let the request continue as
+        // anonymous; Spring Security's normal authorization rules further
+        // down the chain will then correctly return a clean 401 instead of
+        // this filter crashing the whole request with a 500.
+        String email = null;
+        try {
+            email = jwtService.extractUsername(jwt);
+        } catch (JwtException | IllegalArgumentException ignored) {
+            // token invalid/expired — proceed unauthenticated
+        }
+
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             if (jwtService.isTokenValid(jwt, userDetails)) {

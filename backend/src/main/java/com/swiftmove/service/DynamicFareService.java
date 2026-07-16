@@ -15,7 +15,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,33 @@ public class DynamicFareService {
         long durationMins;
         boolean orsUsed = false;
 
-        if (isOrsReady()) {
+        // Precise coordinates from the map picker take priority — they're
+        // exact (house/gate level) whereas re-geocoding the address text
+        // can drift, especially for addresses ORS's free geocoder can't
+        // resolve precisely (society names, landmarks, etc).
+        boolean hasPreciseCoords = req.getPickupLat() != null && req.getPickupLng() != null
+                && req.getDropLat() != null && req.getDropLng() != null;
+
+        if (hasPreciseCoords) {
+            double[] from = { req.getPickupLat(), req.getPickupLng() };
+            double[] to = { req.getDropLat(), req.getDropLng() };
+            if (isOrsReady()) {
+                try {
+                    double[] route = getOrsDistance(from, to);
+                    distanceKm = route[0];
+                    durationMins = (long) route[1];
+                    orsUsed = true;
+                    log.info("ORS (precise coords): {} → {} = {} km", req.getPickup(), req.getDrop(), distanceKm);
+                } catch (Exception e) {
+                    log.warn("ORS failed on precise coords, using haversine: {}", e.getMessage());
+                    distanceKm = haversineCoords(from, to);
+                    durationMins = estimateDuration(distanceKm);
+                }
+            } else {
+                distanceKm = haversineCoords(from, to);
+                durationMins = estimateDuration(distanceKm);
+            }
+        } else if (isOrsReady()) {
             try {
                 double[] from = geocodeOrs(req.getPickup());
                 double[] to = geocodeOrs(req.getDrop());
@@ -88,8 +113,10 @@ public class DynamicFareService {
             durationMins = estimateDuration(distanceKm);
         }
 
-        // 3. Calculate fare components
-        // Base fare covers includedDistanceKm
+        // 3. Calculate fare components — SIMPLIFIED pricing.
+        // Just base fare + distance. No surge pricing, no waiting charges —
+        // predictable, easy-to-explain pricing instead of the old
+        // surge-multiplier / waiting-minute complexity.
         long baseFare = Math.round(rc.getBaseFare());
 
         // Distance charge — only for km BEYOND included distance
@@ -99,25 +126,19 @@ public class DynamicFareService {
             distanceCharge = Math.round(extraKm * rc.getPerKmRate());
         }
 
-        // Waiting charge — only for minutes BEYOND included waiting
-        int waitingMins = Math.max(0, req.getEstimatedWaitingMins());
+        long subtotal = baseFare + distanceCharge;
+
+        // Surge & waiting charges are disabled — kept as zeroed/neutral
+        // fields (rather than removed) so the response shape, FareLog
+        // schema, and admin rate-card screen don't need to change.
+        int waitingMins = 0;
         long waitingCharge = 0;
-        if (waitingMins > rc.getIncludedWaitingMins()) {
-            int extraMins = waitingMins - rc.getIncludedWaitingMins();
-            waitingCharge = Math.round(extraMins * rc.getPerMinWaitingRate());
-        }
+        double surgeMultiplier = 1.0;
+        boolean surgeApplied = false;
+        String surgeReason = "";
+        long surgeCharge = 0;
 
-        long subtotal = baseFare + distanceCharge + waitingCharge;
-
-        // 4. Surge multiplier
-        double surgeMultiplier = getSurge(rc);
-        boolean surgeApplied = surgeMultiplier > 1.0;
-        String surgeReason = surgeApplied ? getSurgeReason() : "";
-        long surgeCharge = surgeApplied
-                ? Math.round(subtotal * (surgeMultiplier - 1.0))
-                : 0;
-
-        double rawTotal = subtotal + surgeCharge;
+        double rawTotal = subtotal;
 
         // 5. Round to nearest ₹5
         long totalFare = roundToNearest5(rawTotal);
@@ -198,39 +219,6 @@ public class DynamicFareService {
 
     public List<FareLog> getAllLogs() {
         return fareLogRepository.findAllByOrderByCalculatedAtDesc();
-    }
-
-    // ── Surge logic ───────────────────────────────────────────────────────────
-    private double getSurge(RateCard rc) {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        int hour = now.getHour();
-        boolean isWeekend = day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
-        boolean isPeakAM = hour >= 8 && hour <= 10;
-        boolean isPeakPM = hour >= 17 && hour <= 20;
-        boolean isPeak = isPeakAM || isPeakPM;
-        if (isWeekend && isPeak)
-            return rc.getWeekendMultiplier() * rc.getPeakHourMultiplier() - 0.1;
-        if (isWeekend)
-            return rc.getWeekendMultiplier();
-        if (isPeak)
-            return rc.getPeakHourMultiplier();
-        return 1.0;
-    }
-
-    private String getSurgeReason() {
-        LocalDateTime now = LocalDateTime.now();
-        DayOfWeek day = now.getDayOfWeek();
-        int hour = now.getHour();
-        boolean isWeekend = day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY;
-        boolean isPeak = (hour >= 8 && hour <= 10) || (hour >= 17 && hour <= 20);
-        if (isWeekend && isPeak)
-            return "Weekend + peak hours";
-        if (isWeekend)
-            return "Weekend demand";
-        if (isPeak)
-            return "Peak hours (high demand)";
-        return "";
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -344,6 +332,10 @@ public class DynamicFareService {
     private double haversine(String pickup, String drop) {
         double[] from = getCoords(pickup);
         double[] to = getCoords(drop);
+        return haversineCoords(from, to);
+    }
+
+    private double haversineCoords(double[] from, double[] to) {
         double R = 6371.0;
         double dLat = Math.toRadians(to[0] - from[0]);
         double dLng = Math.toRadians(to[1] - from[1]);

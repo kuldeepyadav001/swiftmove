@@ -1,6 +1,6 @@
 // src/components/KycAdmin.jsx
 import { useState, useEffect } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 const STATUS_BADGE = {
   PENDING:  "bg-amber-100 text-amber-800",

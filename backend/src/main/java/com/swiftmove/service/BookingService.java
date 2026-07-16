@@ -38,6 +38,13 @@ public class BookingService {
         String vehicleType = (String) req.get("vehicleType");
         int waitingMins = (int) toLong(req.getOrDefault("estimatedWaitingMins", 0));
 
+        // Precise coordinates from the map picker (nullable — older clients
+        // or a manual text-only fallback will simply omit these)
+        Double pickupLat = toDoubleOrNull(req.get("pickupLat"));
+        Double pickupLng = toDoubleOrNull(req.get("pickupLng"));
+        Double dropLat   = toDoubleOrNull(req.get("dropLat"));
+        Double dropLng   = toDoubleOrNull(req.get("dropLng"));
+
         // ── 1. Authoritatively recalculate fare on the server ──────────────
         // Never trust the client for money. Recompute using the same service
         // that powers the frontend fare estimate.
@@ -46,6 +53,10 @@ public class BookingService {
         fareReq.setDrop(drop);
         fareReq.setVehicleType(vehicleType);
         fareReq.setEstimatedWaitingMins(waitingMins);
+        fareReq.setPickupLat(pickupLat);
+        fareReq.setPickupLng(pickupLng);
+        fareReq.setDropLat(dropLat);
+        fareReq.setDropLng(dropLng);
 
         FareResponse fare = dynamicFareService.calculate(fareReq, shipper.getId());
 
@@ -63,6 +74,10 @@ public class BookingService {
                 .shipperEmail(shipper.getEmail())
                 .pickup(pickup)
                 .drop(drop)
+                .pickupLat(pickupLat)
+                .pickupLng(pickupLng)
+                .dropLat(dropLat)
+                .dropLng(dropLng)
                 .goodsType((String) req.get("goodsType"))
                 .weight((String) req.get("weight"))
                 .vehicleType(vehicleType)
@@ -259,6 +274,20 @@ return saved;
             return Long.parseLong(val.toString());
         } catch (Exception e) {
             return 0;
+        }
+    }
+
+    // Unlike toLong/toDouble, returns null (not 0) when absent — 0,0 is a
+    // real place on Earth and would silently corrupt distance calculations.
+    private Double toDoubleOrNull(Object val) {
+        if (val == null)
+            return null;
+        if (val instanceof Number)
+            return ((Number) val).doubleValue();
+        try {
+            return Double.parseDouble(val.toString());
+        } catch (Exception e) {
+            return null;
         }
     }
 

@@ -1,7 +1,7 @@
 // src/components/RateCardAdmin.jsx
 // Add this tab to AdminDashboard
 import { useState, useEffect } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 const CITIES = ["kanpur","delhi","mumbai","lucknow","agra","varanasi",
                 "bangalore","hyderabad","chennai","kolkata","pune","jaipur"];

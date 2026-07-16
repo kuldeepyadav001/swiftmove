@@ -42,6 +42,14 @@ public class Booking {
     private String goodsType;
     private String weight;
 
+    // --- Precise coordinates (house/gate-level pin, not just city) ---
+    // Captured by the frontend LocationPicker (map pin + search), used for
+    // accurate ORS routing and to plot exact markers on TrackingMap.
+    private Double pickupLat;
+    private Double pickupLng;
+    private Double dropLat;
+    private Double dropLng;
+
     // --- Vehicle Details ---
     private String vehicleType;   // e.g., tata-ace, bike, etc.
     private String vehicleLabel;  // Display name for UI

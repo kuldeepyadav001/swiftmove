@@ -1,6 +1,6 @@
 // src/components/KycUpload.jsx
 import { useState, useEffect, useRef } from "react";
-import { authHeaders } from "../api/authApi";
+import { authHeaders } from "../api/sessionStorage";
 
 const VEHICLE_TYPES = [
   { id: "bike",          label: "Bike (2-Wheeler)"      },
