@@ -19,13 +19,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DynamicFareService {
 
-    private final RateCardRepository rateCardRepository;
     private final FareLogRepository fareLogRepository;
+    private final RateCardRepository rateCardRepository;
+    private final RestTemplate restTemplate;
 
     @Value("${ors.api.key}")
     private String orsApiKey;
@@ -298,9 +299,8 @@ public class DynamicFareService {
     // ── ORS API calls ─────────────────────────────────────────────────────────
     @SuppressWarnings("unchecked")
     private double[] geocodeOrs(String place) {
-        RestTemplate rt = new RestTemplate();
-        String url = String.format(ORS_GEOCODE, orsApiKey, place.replace(" ", "+"));
-        Map<String, Object> response = (Map<String, Object>) rt.getForObject(url, Map.class);
+    String url = String.format(ORS_GEOCODE, orsApiKey, place.replace(" ", "+"));
+    Map<String, Object> response = (Map<String, Object>) restTemplate.getForObject(url, Map.class);
         List<Object> features = (List<Object>) response.get("features");
         if (features == null || features.isEmpty())
             throw new RuntimeException("Cannot geocode: " + place);
@@ -311,13 +311,12 @@ public class DynamicFareService {
     }
 
     @SuppressWarnings("unchecked")
-    private double[] getOrsDistance(double[] from, double[] to) {
-        RestTemplate rt = new RestTemplate();
-        Map<String, Object> body = Map.of("coordinates", new double[][] { { from[1], from[0] }, { to[1], to[0] } });
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", orsApiKey);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        Map<String, Object> response = (Map<String, Object>) rt.postForObject(ORS_DIRECTIONS,
+   private double[] getOrsDistance(double[] from, double[] to) {
+    Map<String, Object> body = Map.of(...);
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Authorization", orsApiKey);
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    Map<String, Object> response = (Map<String, Object>) restTemplate.postForObject(ORS_DIRECTIONS,
                 new HttpEntity<>(body, headers), Map.class);
         List<Object> routes = (List<Object>) response.get("routes");
         Map<String, Object> route = (Map<String, Object>) routes.get(0);

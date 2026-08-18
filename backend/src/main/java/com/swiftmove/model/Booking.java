@@ -65,7 +65,8 @@ public class Booking {
     // --- Status & Lifecycle ---
     private String pickupType;    // now | scheduled
     // Statuses: PENDING, ASSIGNED, IN_TRANSIT, DELIVERED_PENDING_CONFIRMATION, DELIVERED, CANCELLED, DISPUTED
-    private String status;       
+    @Indexed
+    private String status;      
 
     // --- NEW: Delivery Verification & OTP Handoff ---
     

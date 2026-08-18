@@ -1,6 +1,6 @@
 // src/components/FareEstimate.jsx
 import { useState, useEffect, useRef } from "react";
-import { authHeaders } from "../api/sessionStorage";
+import { apiFetch } from "../api/apiFetch";
 
 function formatINR(n) {
   return `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -75,8 +75,8 @@ export default function FareEstimate({
             estimatedWaitingMins: waitingMins || 0,
           }),
         });
-        setFare(data);
-        if (onFareCalculated) onFareCalculated(data);
+        setFare(res);
+        if (onFareCalculated) onFareCalculated(res);
       } catch (e) {
         setError("Could not calculate fare. Please check city names.");
         setFare(null);
