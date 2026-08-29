@@ -1,6 +1,7 @@
 package com.swiftmove.controller;
 
 import com.swiftmove.dto.BookingRequest;
+import com.swiftmove.dto.DeliveryDtos;
 import com.swiftmove.model.Booking;
 import com.swiftmove.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -38,18 +38,16 @@ public class BookingController {
     public ResponseEntity<List<Booking>> pendingJobs() {
         return ResponseEntity.ok(bookingService.getPendingJobs());
     }
+
     @PutMapping("/{id}/accept")
     public ResponseEntity<Booking> accept(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.accept(id, getEmail()));
     }
 
-    // --- NEW DELIVERY HAND-OFF ENDPOINTS ---
-
     @PutMapping("/{id}/request-delivery")
-    public ResponseEntity<Booking> requestDelivery(@PathVariable String id, @RequestBody Map<String, Object> req) {
-        @SuppressWarnings("unchecked")
-        List<String> images = (List<String>) req.get("images");
-        return ResponseEntity.ok(bookingService.requestDelivery(id, images, getEmail()));
+    public ResponseEntity<Booking> requestDelivery(
+            @PathVariable String id, @RequestBody DeliveryDtos.RequestDeliveryRequest req) {
+        return ResponseEntity.ok(bookingService.requestDelivery(id, req.getImages(), getEmail()));
     }
 
     @PutMapping("/{id}/resend-delivery-otp")
@@ -58,13 +56,15 @@ public class BookingController {
     }
 
     @PutMapping("/{id}/verify-delivery-otp")
-    public ResponseEntity<Booking> verifyOtp(@PathVariable String id, @RequestBody Map<String, String> req) {
-        return ResponseEntity.ok(bookingService.verifyDeliveryOtp(id, req.get("otp"), getEmail()));
+    public ResponseEntity<Booking> verifyOtp(
+            @PathVariable String id, @RequestBody DeliveryDtos.VerifyOtpRequest req) {
+        return ResponseEntity.ok(bookingService.verifyDeliveryOtp(id, req.getOtp(), getEmail()));
     }
 
     @PutMapping("/{id}/report-dispute")
-    public ResponseEntity<Booking> reportDispute(@PathVariable String id, @RequestBody Map<String, String> req) {
-        return ResponseEntity.ok(bookingService.reportDispute(id, req.get("reason"), getEmail()));
+    public ResponseEntity<Booking> reportDispute(
+            @PathVariable String id, @RequestBody DeliveryDtos.DisputeRequest req) {
+        return ResponseEntity.ok(bookingService.reportDispute(id, req.getReason(), getEmail()));
     }
 
     @PutMapping("/{id}/cancel")
