@@ -23,3 +23,5 @@
 | 2026-08-30 | Updated footer copyright to `new Date().getFullYear()` | Was hardcoded to 2024 | Done |
 | 2026-08-30 | Added favicon (inline SVG) + meta tags to `index.html` | No favicon, no social preview, no description | Done |
 | 2026-08-30 | Updated continuity pack (`00_READ_ME_FIRST.md`, `01_PROJECT_STATE.md`, `02_DECISIONS_LOG.md`) | Project must survive agent session death | Done |
+| 2026-08-30 | Extracted SVG icons from App.jsx → `shared/Icons.jsx` | Reduced App.jsx by 137 lines; enables other components to use icons | Done |
+| 2026-08-30 | Switched Leaflet from CDN script injection to npm dynamic import | Already in package.json; CDN added round-trip and could fail | Done |
