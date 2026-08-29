@@ -1388,11 +1388,12 @@ function DriverEarnings({ user }) {
 //     when the WebSocket status_update says a driver was assigned
 // ─────────────────────────────────────────────────────────────────────────────
 function ShipperDashboard({ user, logout }) {
+  const ws = useWebSocket();
   const {
     notifications, unreadCount, toasts,
     markAllRead, markOneRead, dismissToast,
-    addNotification,   // ✅ FIX 5: now passed to ShipperHome
-  } = useNotifications(user, null);
+    addNotification,
+  } = useNotifications(user, ws);
   const [tab, setTab] = useState("home");
   const navItems = [
     { id: "home",    label: "Dashboard",     icon: IC.Home  },
@@ -1420,10 +1421,11 @@ function ShipperDashboard({ user, logout }) {
 }
 
 function DriverDashboard({ user, logout }) {
+  const ws = useWebSocket();
   const {
     notifications, unreadCount, toasts,
     markAllRead, markOneRead, dismissToast,
-  } = useNotifications(user, null);
+  } = useNotifications(user, ws);
   const [tab, setTab] = useState("home");
   const navItems = [
     { id: "home",     label: "Dashboard", icon: IC.Home   },
@@ -1777,7 +1779,7 @@ function LandingPage({ go }) {
             <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center text-white"><IC.Truck /></div>
             <span className="text-white font-bold">Swift<span className="text-blue-400">Move</span></span>
           </div>
-          <p className="text-sm text-slate-500">© 2024 SwiftMove.</p>
+          <p className="text-sm text-slate-500">© {new Date().getFullYear()} SwiftMove.</p>
           <div className="flex gap-6 text-sm">
             {["Privacy", "Terms", "Contact"].map((l) => (
               <a key={l} href="#" className="hover:text-white transition-colors">{l}</a>

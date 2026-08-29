@@ -1,5 +1,6 @@
 package com.swiftmove.controller;
 
+import com.swiftmove.dto.BookingRequest;
 import com.swiftmove.model.Booking;
 import com.swiftmove.service.BookingService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<Booking> create(@RequestBody Map<String, Object> req) {
+    public ResponseEntity<Booking> create(@RequestBody BookingRequest req) {
         return ResponseEntity.ok(bookingService.create(req, getEmail()));
     }
 
@@ -37,11 +38,6 @@ public class BookingController {
     public ResponseEntity<List<Booking>> pendingJobs() {
         return ResponseEntity.ok(bookingService.getPendingJobs());
     }
-@DeleteMapping("/{id}/cancel")
-public ResponseEntity<Booking> delete(@PathVariable String id) {
-    return ResponseEntity.ok(bookingService.cancel(id, getEmail()));
-}
-
     @PutMapping("/{id}/accept")
     public ResponseEntity<Booking> accept(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.accept(id, getEmail()));

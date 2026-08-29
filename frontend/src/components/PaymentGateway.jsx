@@ -16,7 +16,7 @@ function loadRazorpayScript() {
   });
 }
 
-export default function PaymentGateway({ booking, user, onSuccess }) {
+export default function PaymentGateway({ booking, user, onSuccess, onCancel }) {
   const [method, setMethod]         = useState(null);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState("");
@@ -231,10 +231,12 @@ export default function PaymentGateway({ booking, user, onSuccess }) {
         </div>
       )}
 
-      <button onClick={onCancel} disabled={loading}
-        className="w-full py-3 border-2 border-slate-200 text-slate-500 font-semibold rounded-xl hover:border-slate-300 transition-all text-sm disabled:opacity-50">
-        Cancel
-      </button>
+      {onCancel && (
+        <button onClick={onCancel} disabled={loading}
+          className="w-full py-3 border-2 border-slate-200 text-slate-500 font-semibold rounded-xl hover:border-slate-300 transition-all text-sm disabled:opacity-50">
+          Cancel
+        </button>
+      )}
     </div>
   );
 }

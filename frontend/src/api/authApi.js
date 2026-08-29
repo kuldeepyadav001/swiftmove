@@ -1,10 +1,21 @@
 // src/api/authApi.js
 // All calls go through Vite's proxy → http://localhost:8080
-import { apiFetch } from "./apiFetch";
+//
+// NOTE: login/register deliberately use plain fetch() instead of apiFetch().
+// Why: apiFetch() redirects to the login page on a 401 (session expired).
+// For login/register, a 401 means "wrong password" or "bad request" — it
+// does NOT mean the session is expired (there IS no session yet). Routing
+// these through apiFetch would kick the user back to the login page they're
+// already on, losing their form state. So these stay on plain fetch.
+//
+// saveSession is intentionally NOT exported from here. The canonical copy
+// lives in ./sessionStorage.js — App.jsx imports it from there. Keeping one
+// source of truth prevents import confusion.
+
 const BASE = `${import.meta.env.VITE_API_BASE || ""}/api/auth`;
 
 async function request(url, body) {
- const res = await fetch(url, {
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -27,7 +38,6 @@ async function request(url, body) {
   }
 
   return data;
-
 }
 
 export async function registerUser({ name, email, phone, password, role }) {
@@ -47,18 +57,3 @@ export async function loginUser({ email, password, role }) {
     role: role?.toUpperCase(),
   });
 }
-
-// Save token + user info to localStorage after login/register
-export function saveSession(data) {
-  localStorage.setItem("swiftmove_token", data.token);
-  localStorage.setItem(
-    "swiftmove_user",
-    JSON.stringify({
-      id: data.id,
-      name: data.name,
-      email: data.email,
-      role: data.role.toLowerCase(),
-    })
-  );
-}
-

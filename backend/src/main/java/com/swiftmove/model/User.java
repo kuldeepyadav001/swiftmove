@@ -1,5 +1,7 @@
 package com.swiftmove.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.swiftmove.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +19,8 @@ public class User {
     private String name;
     @Indexed(unique = true) private String email;
     private String phone;
+    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
     private Role role;
     private boolean verified;

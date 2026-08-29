@@ -21,6 +21,12 @@ public class AuthController {
     private final AuthService authService;
     private final OtpService  otpService;
 
+    // ── Health check (public, used by uptime monitors / orchestration) ─────
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        return ResponseEntity.ok(Map.of("status", "ok"));
+    }
+
     // ── Register ──────────────────────────────────────────────────────────────
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req) {

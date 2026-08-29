@@ -1,6 +1,7 @@
 package com.swiftmove.service;
 
 import com.swiftmove.controller.LocationController;
+import com.swiftmove.dto.BookingRequest;
 import com.swiftmove.dto.FareDtos.FareRequest;
 import com.swiftmove.dto.FareDtos.FareResponse;
 import com.swiftmove.model.Booking;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class BookingService {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
     private final LocationController locationController;
@@ -29,21 +33,21 @@ public class BookingService {
 
     // --- CORE LIFECYCLE METHODS ---
 
-    public Booking create(Map<String, Object> req, String shipperEmail) {
+    public Booking create(BookingRequest req, String shipperEmail) {
         User shipper = userRepository.findByEmail(shipperEmail)
                 .orElseThrow(() -> new RuntimeException("Shipper not found"));
 
-        String pickup = (String) req.get("pickup");
-        String drop = (String) req.get("drop");
-        String vehicleType = (String) req.get("vehicleType");
-        int waitingMins = (int) toLong(req.getOrDefault("estimatedWaitingMins", 0));
+        String pickup = req.getPickup();
+        String drop = req.getDrop();
+        String vehicleType = req.getVehicleType();
+        int waitingMins = req.getEstimatedWaitingMins();
 
         // Precise coordinates from the map picker (nullable — older clients
         // or a manual text-only fallback will simply omit these)
-        Double pickupLat = toDoubleOrNull(req.get("pickupLat"));
-        Double pickupLng = toDoubleOrNull(req.get("pickupLng"));
-        Double dropLat   = toDoubleOrNull(req.get("dropLat"));
-        Double dropLng   = toDoubleOrNull(req.get("dropLng"));
+        Double pickupLat = req.getPickupLat();
+        Double pickupLng = req.getPickupLng();
+        Double dropLat   = req.getDropLat();
+        Double dropLng   = req.getDropLng();
 
         // ── 1. Authoritatively recalculate fare on the server ──────────────
         // Never trust the client for money. Recompute using the same service
@@ -60,14 +64,7 @@ public class BookingService {
 
         FareResponse fare = dynamicFareService.calculate(fareReq, shipper.getId());
 
-        // ── 2. Sanity check vs what the client sent ────────────────────────
-        long clientTotal = toLong(req.get("totalFare"));
-        if (clientTotal > 0 && Math.abs(clientTotal - fare.getTotalFare()) > 50) {
-            log.warn("Fare mismatch! client={} server={} — using server value",
-                    clientTotal, fare.getTotalFare());
-        }
-
-        // ── 3. Build booking with the SERVER-computed split ────────────────
+        // ── 2. Build booking with the SERVER-computed split ────────────────
         Booking b = Booking.builder()
                 .shipperUserId(shipper.getId())
                 .shipperName(shipper.getName())
@@ -78,11 +75,11 @@ public class BookingService {
                 .pickupLng(pickupLng)
                 .dropLat(dropLat)
                 .dropLng(dropLng)
-                .goodsType((String) req.get("goodsType"))
-                .weight((String) req.get("weight"))
+                .goodsType(req.getGoodsType())
+                .weight(req.getWeight())
                 .vehicleType(vehicleType)
                 .vehicleLabel(fare.getVehicleLabel())
-                .pickupType((String) req.getOrDefault("pickupType", "now"))
+                .pickupType(req.getPickupType() != null ? req.getPickupType() : "now")
                 // ── Money fields (server-computed, single source of truth) ──
                 .totalFare(fare.getTotalFare())
                 .driverCut(fare.getDriverPayout())
@@ -128,7 +125,7 @@ public class BookingService {
         if (!driverEmail.equals(b.getDriverEmail()))
             throw new RuntimeException("Unauthorized Access");
 
-        String otp = String.valueOf((int) (Math.random() * 900000) + 100000);
+        String otp = String.format("%06d", SECURE_RANDOM.nextInt(900000) + 100000);
         b.setStatus("DELIVERED_PENDING_CONFIRMATION");
         b.setDriverProofImages(images);
         b.setDeliveryOtp(otp);
@@ -154,7 +151,7 @@ public class BookingService {
         if (b.getDeliveryOtpResendCount() >= 3) {
             throw new RuntimeException("Maximum resend limit (3) reached. Contact support.");
         }
-        String newOtp = String.valueOf((int) (Math.random() * 900000) + 100000);
+        String newOtp = String.format("%06d", SECURE_RANDOM.nextInt(900000) + 100000);
         b.setDeliveryOtp(newOtp);
         b.setDeliveryOtpExpiry(LocalDateTime.now().plusMinutes(30));
         b.setDeliveryOtpResendCount(b.getDeliveryOtpResendCount() + 1);

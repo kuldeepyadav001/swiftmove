@@ -9,11 +9,16 @@ export function useWebSocket() {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const defaultWsUrl = `${protocol}://${window.location.host}/ws`;
     const wsUrl = import.meta.env.VITE_WS_URL || defaultWsUrl;
+    const token = localStorage.getItem("swiftmove_token");
+
     const client = new Client({
       brokerURL: wsUrl,
       reconnectDelay: 5000,
-      heartbeatIncoming: 10000,    // ✅ add this
-  heartbeatOutgoing: 10000,  
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      // Send JWT on STOMP CONNECT — backend WebSocketAuthInterceptor validates
+      // it. Without this, the server rejects the connection with a STOMP ERROR.
+      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       debug: () => {},
     });
 

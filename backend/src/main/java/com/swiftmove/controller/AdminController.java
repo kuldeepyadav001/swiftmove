@@ -26,26 +26,18 @@ public class AdminController {
     @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> stats() {
         long totalUsers    = userRepository.count();
-        long totalShippers = userRepository.findAllByRole(Role.SHIPPER).size();
-        long totalDrivers  = userRepository.findAllByRole(Role.DRIVER).size();
+        long totalShippers = userRepository.countByRole(Role.SHIPPER);
+        long totalDrivers  = userRepository.countByRole(Role.DRIVER);
         long totalBookings = bookingRepository.count();
         long pending       = bookingRepository.countByStatus("PENDING");
         long assigned      = bookingRepository.countByStatus("ASSIGNED");
         long delivered     = bookingRepository.countByStatus("DELIVERED");
         long cancelled     = bookingRepository.countByStatus("CANCELLED");
 
-        // Total revenue = sum of app commission from delivered bookings
-        long totalRevenue = bookingRepository
-                .findByStatusOrderByCreatedAtDesc("DELIVERED")
-                .stream()
-                .mapToLong(Booking::getAppCut)
-                .sum();
-
-        long totalPayouts = bookingRepository
-                .findByStatusOrderByCreatedAtDesc("DELIVERED")
-                .stream()
-                .mapToLong(Booking::getDriverCut)
-                .sum();
+        // Total revenue/payouts — computed on MongoDB via $group/$sum,
+        // NOT by loading all delivered bookings into Java memory.
+        Long totalRevenue = bookingRepository.sumAppCutByStatus("DELIVERED");
+        Long totalPayouts = bookingRepository.sumDriverCutByStatus("DELIVERED");
 
         return ResponseEntity.ok(Map.of(
                 "totalUsers",    totalUsers,
@@ -56,8 +48,8 @@ public class AdminController {
                 "assigned",      assigned,
                 "delivered",     delivered,
                 "cancelled",     cancelled,
-                "totalRevenue",  totalRevenue,
-                "totalPayouts",  totalPayouts
+                "totalRevenue",  totalRevenue != null ? totalRevenue : 0L,
+                "totalPayouts",  totalPayouts != null ? totalPayouts : 0L
         ));
     }
 
