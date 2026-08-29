@@ -1,35 +1,35 @@
 // src/utils/leaflet.js
-// Single shared Leaflet loader used by every map component (TrackingMap,
-// LocationPicker, DriverRouteMap). Previously each component had its own
-// copy of this logic, which raced: if the <script> tag had already finished
-// loading by the time a second component checked for it, that component's
-// "load" listener would attach AFTER the event already fired and would
-// therefore never resolve — leaving that map permanently blank. Caching the
-// promise at module scope means every caller awaits the exact same promise,
-// so there is no race no matter which component mounts first.
+// Shared Leaflet loader. Leaflet is installed via npm (in package.json) but
+// its CSS must be imported separately. This module lazily imports both so
+// map components don't pay the cost until they actually mount.
+//
+// Previously each map component had its own copy of this logic, which raced:
+// if the script had already loaded by the time a second component checked,
+// that component's "load" listener would fire too late and the map would
+// stay blank forever. Caching the promise at module scope fixes this.
 
 let leafletPromise = null;
 
 export function loadLeaflet() {
   if (leafletPromise) return leafletPromise;
 
-  leafletPromise = new Promise((resolve) => {
-    if (window.L) { resolve(window.L); return; }
+  leafletPromise = (async () => {
+    // Import JS and CSS from npm package
+    const L = (await import("leaflet")).default;
+    await import("leaflet/dist/leaflet.css");
 
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
+    // Fix default marker icon paths (Vite bundles break Leaflet's relative URLs)
+    // eslint-disable-next-line no-undef
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+      iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+      shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+    });
 
-    const script = document.createElement("script");
-    script.id = "leaflet-js";
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => resolve(window.L);
-    document.head.appendChild(script);
-  });
+    window.L = L;
+    return L;
+  })();
 
   return leafletPromise;
 }
