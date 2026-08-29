@@ -25,3 +25,6 @@
 | 2026-08-30 | Updated continuity pack (`00_READ_ME_FIRST.md`, `01_PROJECT_STATE.md`, `02_DECISIONS_LOG.md`) | Project must survive agent session death | Done |
 | 2026-08-30 | Extracted SVG icons from App.jsx → `shared/Icons.jsx` | Reduced App.jsx by 137 lines; enables other components to use icons | Done |
 | 2026-08-30 | Switched Leaflet from CDN script injection to npm dynamic import | Already in package.json; CDN added round-trip and could fail | Done |
+| 2026-08-30 | Extracted StatCard, Badge, EmptyState, PublicNavbar → `shared/UI.jsx` | Reduced App.jsx by 88 more lines (1,803 → 1,578 total reduction: 225 lines) | Done |
+| 2026-08-30 | Created `DeliveryDtos` (RequestDeliveryRequest, VerifyOtpRequest, DisputeRequest) | Replaced Map<String,Object>/Map<String,String> in delivery endpoints — no more unchecked casts | Done |
+| 2026-08-30 | Deleted dead `useDistancePrice.js` hook | Not imported anywhere; FareEstimate component handles fare calculation | Done |
