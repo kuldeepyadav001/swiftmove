@@ -35,6 +35,7 @@ public class Booking {
     private String driverUserId;
     private String driverName;
     private String driverEmail;
+    private String driverPhone;   // Added for shipper-driver contact
 
     // --- Route & Shipment Info ---
     private String pickup;
@@ -84,6 +85,9 @@ public class Booking {
 
     // Reason provided if the booking is moved to DISPUTED status
     private String disputeReason;
+
+    // Shipper's rating of the driver (1-5 stars, set after delivery)
+    private Integer shipperRating;
 
     // --- Timestamps ---
     private LocalDateTime createdAt;

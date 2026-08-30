@@ -125,6 +125,7 @@ public class BookingService {
         b.setDriverUserId(driver.getId());
         b.setDriverName(driver.getName());
         b.setDriverEmail(driver.getEmail());
+        b.setDriverPhone(driver.getPhone());
         b.setStatus("ASSIGNED");
         b.setAcceptedAt(LocalDateTime.now());
         b.setUpdatedAt(LocalDateTime.now());
@@ -219,6 +220,19 @@ return saved;
         if (!shipperEmail.equals(b.getShipperEmail()))
             throw new RuntimeException("Unauthorized");
         b.setStatus("CANCELLED");
+        return bookingRepository.save(b);
+    }
+
+    public Booking rateBooking(String bookingId, Integer stars, String shipperEmail) {
+        if (stars == null || stars < 1 || stars > 5)
+            throw new RuntimeException("Rating must be between 1 and 5 stars.");
+        Booking b = bookingRepository.findById(bookingId).orElseThrow(() -> new RuntimeException("Booking not found"));
+        if (!shipperEmail.equals(b.getShipperEmail()))
+            throw new RuntimeException("Only the shipper can rate this booking.");
+        if (!"DELIVERED".equals(b.getStatus()))
+            throw new RuntimeException("Can only rate delivered bookings.");
+        b.setShipperRating(stars);
+        b.setUpdatedAt(LocalDateTime.now());
         return bookingRepository.save(b);
     }
 

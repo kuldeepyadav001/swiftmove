@@ -14,6 +14,7 @@ import {
   registerUser,
   loginUser
 } from "./api/authApi";
+import { apiFetch } from "./api/apiFetch";
  import{saveSession,
   loadSession,
   clearSession,
@@ -293,6 +294,16 @@ function ShipperHome({ user, goBook, addNotification }) {
               </div>
             ))}
           </div>
+          {/* ── Call driver button ── */}
+          {inTransit[0].driverPhone && (
+            <a href={`tel:${inTransit[0].driverPhone}`}
+              className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all text-sm">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+              Call {inTransit[0].driverName}
+            </a>
+          )}
           {driverLocation && (
             <div className="flex items-center gap-2 text-xs text-emerald-600 font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -637,6 +648,8 @@ if (showPayment && bookedData) return (
 function ShipperOrders({ user }) {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [ratingFor, setRatingFor] = useState(null);  // bookingId being rated
+  const [stars, setStars]       = useState(5);
 
   useEffect(() => {
     getMyBookings()
@@ -649,6 +662,19 @@ function ShipperOrders({ user }) {
     try {
       await cancelBooking(id);
       setBookings((prev) => prev.map((b) => b.id === id ? { ...b, status: "CANCELLED" } : b));
+    } catch (e) { alert(e.message); }
+  };
+
+  const openRating = (id) => { setRatingFor(id); setStars(5); };
+
+  const submitRating = async () => {
+    try {
+      await apiFetch(`/api/bookings/${ratingFor}/rate`, {
+        method: "PUT",
+        body: JSON.stringify({ stars }),
+      });
+      setBookings(prev => prev.map(b => b.id === ratingFor ? { ...b, shipperRating: stars } : b));
+      setRatingFor(null);
     } catch (e) { alert(e.message); }
   };
 
@@ -684,7 +710,14 @@ function ShipperOrders({ user }) {
                 {b.goodsType} · {b.vehicleLabel} · {new Date(b.createdAt).toLocaleDateString("en-IN")}
               </p>
               {b.driverName && (
-                <p className="text-xs text-blue-600 font-medium mt-0.5">Driver: {b.driverName}</p>
+                <p className="text-xs text-blue-600 font-medium mt-0.5">
+                  Driver: {b.driverName}
+                  {b.driverPhone && (
+                    <a href={`tel:${b.driverPhone}`} className="ml-2 text-emerald-600 hover:text-emerald-700" title="Call driver">
+                       {b.driverPhone}
+                    </a>
+                  )}
+                </p>
               )}
             </div>
            <div className="text-right flex-shrink-0 space-y-1.5">
@@ -715,11 +748,52 @@ function ShipperOrders({ user }) {
       Cancel
     </button>
   )}
+  {b.status === "DELIVERED" && !b.shipperRating && (
+    <button onClick={() => openRating(b.id)}
+      className="block text-xs text-amber-600 hover:text-amber-700 font-bold ml-auto">
+       Rate driver
+    </button>
+  )}
+  {b.shipperRating && (
+    <div className="flex items-center gap-0.5 mt-1">
+      {[1,2,3,4,5].map(s => (
+        <span key={s} className={`text-xs ${s <= b.shipperRating ? "text-amber-400" : "text-slate-300"}`}>★</span>
+      ))}
+    </div>
+  )}
 </div>
           </div>
         ))}
       </div>
     </div>
+    {/* ── Rating Modal ── */}
+    {ratingFor && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}
+        onClick={() => setRatingFor(null)}>
+        <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
+          <p className="text-lg font-bold text-slate-900 mb-1">Rate your driver</p>
+          <p className="text-sm text-slate-400 mb-6">How was the delivery?</p>
+          <div className="flex justify-center gap-2 mb-6">
+            {[1,2,3,4,5].map(s => (
+              <button key={s} onClick={() => setStars(s)}
+                className={`text-3xl transition-all hover:scale-110 ${s <= stars ? "text-amber-400" : "text-slate-200"}`}>
+                ★
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => setRatingFor(null)}
+              className="flex-1 py-3 border-2 border-slate-200 text-slate-600 font-bold rounded-xl text-sm hover:border-slate-300 transition-all">
+              Skip
+            </button>
+            <button onClick={submitRating}
+              className="flex-1 py-3 bg-blue-700 text-white font-bold rounded-xl text-sm hover:bg-blue-800 transition-all shadow-lg shadow-blue-200">
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
 

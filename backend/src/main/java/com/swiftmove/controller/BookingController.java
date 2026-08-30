@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -81,6 +82,13 @@ public class BookingController {
     @PutMapping("/{id}/cancel")
     public ResponseEntity<Booking> cancel(@PathVariable String id) {
         return ResponseEntity.ok(bookingService.cancel(id, getEmail()));
+    }
+
+    // Rate a delivered booking (1-5 stars)
+    @PutMapping("/{id}/rate")
+    public ResponseEntity<Booking> rateBooking(
+            @PathVariable String id, @RequestBody Map<String, Integer> req) {
+        return ResponseEntity.ok(bookingService.rateBooking(id, req.get("stars"), getEmail()));
     }
 
     private String getEmail() {
