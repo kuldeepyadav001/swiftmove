@@ -112,22 +112,22 @@ function DashboardShell({
         <div className="fixed inset-0 z-20 bg-black/40 lg:hidden"
           onClick={() => setSidebarOpen(false)} />
       )}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-200 z-30 flex flex-col transition-transform duration-200
+      <aside className={`fixed top-0 left-0 h-full w-64 bg-white border-r border-slate-100 z-30 flex flex-col transition-transform duration-200
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:z-auto`}>
         <div className="h-16 flex items-center px-5 border-b border-slate-100 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-blue-700 flex items-center justify-center text-white mr-2.5">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white mr-2.5 shadow-sm">
             <IC.Truck />
           </div>
-          <span className="font-bold text-slate-900">
-            Swift<span className="text-blue-700">Move</span>
+          <span className="font-extrabold text-slate-900">
+            Swift<span className="text-blue-600">Move</span>
           </span>
           <button className="ml-auto lg:hidden text-slate-400" onClick={() => setSidebarOpen(false)}>
             <IC.X />
           </button>
         </div>
         <div className="px-4 py-3 border-b border-slate-100">
-          <span className={`text-xs font-bold px-3 py-1 rounded-full ${isShipper ? "bg-blue-100 text-blue-700" : "bg-slate-800 text-white"}`}>
-            {isShipper ? "Shipper account" : "Driver account"}
+          <span className={`text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider ${isShipper ? "bg-blue-50 text-blue-700 border border-blue-100" : "bg-slate-800 text-white"}`}>
+            {isShipper ? "Shipper" : "Driver"}
           </span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
@@ -135,7 +135,7 @@ function DashboardShell({
             <button key={id}
               onClick={() => { setActiveTab(id); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all
-                ${activeTab === id ? "bg-blue-700 text-white shadow-md shadow-blue-200" : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"}`}>
+                ${activeTab === id ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}>
               <Icon />
               {label}
             </button>
@@ -143,7 +143,7 @@ function DashboardShell({
         </nav>
         <div className="p-4 border-t border-slate-100 flex-shrink-0">
           <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0 border border-blue-100">
               {user?.name?.charAt(0).toUpperCase() || "U"}
             </div>
             <div className="overflow-hidden">
@@ -152,7 +152,7 @@ function DashboardShell({
             </div>
           </div>
           <button onClick={logout}
-            className="w-full flex items-center gap-2 text-sm text-slate-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-all">
+            className="w-full flex items-center gap-2 text-sm text-slate-400 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-lg transition-all">
             <IC.Logout />
             Log out
           </button>
@@ -160,11 +160,11 @@ function DashboardShell({
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center px-6 gap-4 flex-shrink-0">
+        <header className="h-16 bg-white/95 backdrop-blur-sm border-b border-slate-100 flex items-center px-6 gap-4 flex-shrink-0">
           <button className="lg:hidden text-slate-500" onClick={() => setSidebarOpen(true)}>
             <IC.Menu />
           </button>
-          <h1 className="text-base font-bold text-slate-900">
+          <h1 className="text-lg font-extrabold text-slate-900 tracking-tight">
             {navItems.find((n) => n.id === activeTab)?.label}
           </h1>
           <div className="ml-auto flex items-center gap-3">
@@ -174,7 +174,7 @@ function DashboardShell({
               markAllRead={markAllRead || (() => {})}
               markOneRead={markOneRead || (() => {})}
             />
-            <div className="w-8 h-8 rounded-full bg-blue-700 flex items-center justify-center text-white text-sm font-bold">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white text-sm font-bold shadow-sm">
               {user?.name?.charAt(0).toUpperCase() || "U"}
             </div>
           </div>
@@ -183,20 +183,20 @@ function DashboardShell({
       </div>
 
       {/* ── Mobile Bottom Tab Bar ── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white border-t border-slate-200 safe-area-bottom">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 lg:hidden bg-white/95 backdrop-blur-sm border-t border-slate-100 safe-area-bottom">
         <div className="flex items-center justify-around px-2 py-1">
           {navItems.map(({ id, label, icon: Icon }) => (
             <button key={id}
               onClick={() => setActiveTab(id)}
               className={`flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all min-w-0 flex-1
                 ${activeTab === id
-                  ? "text-blue-700"
+                  ? "text-blue-600"
                   : "text-slate-400 active:text-slate-600"}`}>
               <Icon />
-              <span className={`text-[10px] font-semibold truncate ${activeTab === id ? "text-blue-700" : "text-slate-400"}`}>
+              <span className={`text-[10px] font-bold truncate ${activeTab === id ? "text-blue-600" : "text-slate-400"}`}>
                 {label}
               </span>
-              {activeTab === id && <div className="w-1 h-1 rounded-full bg-blue-700 mt-0.5" />}
+              {activeTab === id && <div className="w-1 h-1 rounded-full bg-blue-600 mt-0.5" />}
             </button>
           ))}
         </div>
