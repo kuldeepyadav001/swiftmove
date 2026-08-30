@@ -1,6 +1,7 @@
 package com.swiftmove.config;
 
 import com.swiftmove.security.JwtAuthFilter;
+import com.swiftmove.security.RateLimitFilter;
 import com.swiftmove.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final UserDetailsServiceImpl userDetailsService;
 
     @Value("${app.cors.allowed-origins}")
@@ -91,6 +93,7 @@ public class SecurityConfig {
                         // Everything else needs a token
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
+                .addFilterBefore(rateLimitFilter, JwtAuthFilter.class)
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

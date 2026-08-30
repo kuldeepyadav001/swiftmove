@@ -5,9 +5,11 @@ import com.swiftmove.dto.BookingRequest;
 import com.swiftmove.dto.FareDtos.FareRequest;
 import com.swiftmove.dto.FareDtos.FareResponse;
 import com.swiftmove.model.Booking;
+import com.swiftmove.model.KycDocument;
 import com.swiftmove.model.RateCard;
 import com.swiftmove.model.User;
 import com.swiftmove.repository.BookingRepository;
+import com.swiftmove.repository.KycRepository;
 import com.swiftmove.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,8 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 
 @Slf4j
 @Service
@@ -27,9 +31,10 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final UserRepository userRepository;
+    private final KycRepository kycRepository;
     private final LocationController locationController;
     private final EmailService emailService;
-    private final DynamicFareService dynamicFareService; // ← NEW
+    private final DynamicFareService dynamicFareService;
 
     // --- CORE LIFECYCLE METHODS ---
 
@@ -105,6 +110,17 @@ public class BookingService {
 
         if (!"PENDING".equals(b.getStatus()))
             throw new RuntimeException("Job no longer available");
+
+        // ── Server-side KYC gate ──
+        // Prevents unverified drivers from accepting jobs even if the UI
+        // somehow lets them through. The UI check is a UX hint; this is
+        // the actual enforcement layer.
+        Optional<KycDocument> kyc = kycRepository.findByDriverId(driver.getId());
+        if (kyc.isEmpty() || !"APPROVED".equals(kyc.get().getStatus())) {
+            log.warn("Driver {} attempted to accept job {} without approved KYC (status: {})",
+                    driver.getId(), bookingId, kyc.map(KycDocument::getStatus).orElse("NONE"));
+            throw new RuntimeException("KYC verification required. Please upload your documents and wait for approval.");
+        }
 
         b.setDriverUserId(driver.getId());
         b.setDriverName(driver.getName());
@@ -206,18 +222,18 @@ return saved;
         return bookingRepository.save(b);
     }
 
-    public List<Booking> getShipperBookings(String email) {
+    public List<Booking> getShipperBookings(String email, Pageable pageable) {
         User u = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        return bookingRepository.findByShipperUserIdOrderByCreatedAtDesc(u.getId());
+        return bookingRepository.findByShipperUserIdOrderByCreatedAtDesc(u.getId(), pageable).getContent();
     }
 
-    public List<Booking> getDriverBookings(String email) {
+    public List<Booking> getDriverBookings(String email, Pageable pageable) {
         User u = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
-        return bookingRepository.findByDriverUserIdOrderByCreatedAtDesc(u.getId());
+        return bookingRepository.findByDriverUserIdOrderByCreatedAtDesc(u.getId(), pageable).getContent();
     }
 
-    public List<Booking> getPendingJobs() {
-        return bookingRepository.findByStatusOrderByCreatedAtDesc("PENDING");
+    public List<Booking> getPendingJobs(Pageable pageable) {
+        return bookingRepository.findByStatusOrderByCreatedAtDesc("PENDING", pageable).getContent();
     }
 
     public List<Booking> getAllBookings() {

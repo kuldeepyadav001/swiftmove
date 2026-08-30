@@ -5,6 +5,8 @@ import com.swiftmove.dto.DeliveryDtos;
 import com.swiftmove.model.Booking;
 import com.swiftmove.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,19 +26,28 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.create(req, getEmail()));
     }
 
+    // Paginated: ?page=0&size=20  (default: page=0, size=50)
     @GetMapping("/my")
-    public ResponseEntity<List<Booking>> myBookings() {
-        return ResponseEntity.ok(bookingService.getShipperBookings(getEmail()));
+    public ResponseEntity<List<Booking>> myBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        return ResponseEntity.ok(bookingService.getShipperBookings(getEmail(), pageable));
     }
 
     @GetMapping("/driver/my")
-    public ResponseEntity<List<Booking>> driverBookings() {
-        return ResponseEntity.ok(bookingService.getDriverBookings(getEmail()));
+    public ResponseEntity<List<Booking>> driverBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 100));
+        return ResponseEntity.ok(bookingService.getDriverBookings(getEmail(), pageable));
     }
 
+    // Pending jobs: cap at 50 to prevent flooding driver dashboard
     @GetMapping("/pending")
     public ResponseEntity<List<Booking>> pendingJobs() {
-        return ResponseEntity.ok(bookingService.getPendingJobs());
+        Pageable pageable = PageRequest.of(0, 50);
+        return ResponseEntity.ok(bookingService.getPendingJobs(pageable));
     }
 
     @PutMapping("/{id}/accept")

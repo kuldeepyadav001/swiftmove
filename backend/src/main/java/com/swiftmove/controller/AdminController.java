@@ -7,6 +7,8 @@ import com.swiftmove.repository.BookingRepository;
 import com.swiftmove.repository.UserRepository;
 import com.swiftmove.service.BookingService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -71,10 +73,13 @@ public class AdminController {
         return ResponseEntity.ok(userRepository.findAllByRole(Role.DRIVER));
     }
 
-    // GET /api/admin/bookings — all bookings
+    // GET /api/admin/bookings — all bookings (paginated)
     @GetMapping("/bookings")
-    public ResponseEntity<List<Booking>> allBookings() {
-        return ResponseEntity.ok(bookingRepository.findAllByOrderByCreatedAtDesc());
+    public ResponseEntity<List<Booking>> allBookings(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        Pageable pageable = PageRequest.of(page, Math.min(size, 200));
+        return ResponseEntity.ok(bookingRepository.findAllByOrderByCreatedAtDesc(pageable).getContent());
     }
 
     // DELETE /api/admin/users/{id} — remove user

@@ -735,14 +735,16 @@ function DeliveryHandoffPanel({ booking, onUpdate }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Helper: Convert File to Base64 for MongoDB storage
-  const handleFileChange = (e) => {
+  // Helper: Compress + convert File to Base64 for MongoDB storage
+  // Client-side compression keeps images at ~300-500KB (vs 5-15MB from phone cameras)
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => setImages(prev => [...prev, reader.result]);
-      reader.readAsDataURL(file);
-    });
+    for (const file of files) {
+      if (file.size > 15 * 1024 * 1024) { setError("Image too large (max 15MB before compression)"); return; }
+      const { compressImage } = await import("../utils/imageCompress");
+      const b64 = await compressImage(file);
+      if (b64) setImages(prev => [...prev, b64]);
+    }
   };
 
   const handleRequest = async () => {

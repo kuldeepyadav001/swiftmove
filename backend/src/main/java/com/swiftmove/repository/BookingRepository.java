@@ -1,24 +1,29 @@
 package com.swiftmove.repository;
 
 import com.swiftmove.model.Booking;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.data.mongodb.repository.Query;
 
 import java.util.List;
 
 public interface BookingRepository extends MongoRepository<Booking, String> {
 
-    // Shipper's bookings
+    // Shipper's bookings (paginated)
+    Page<Booking> findByShipperUserIdOrderByCreatedAtDesc(String shipperUserId, Pageable pageable);
     List<Booking> findByShipperUserIdOrderByCreatedAtDesc(String shipperUserId);
 
-    // Driver's bookings
+    // Driver's bookings (paginated)
+    Page<Booking> findByDriverUserIdOrderByCreatedAtDesc(String driverUserId, Pageable pageable);
     List<Booking> findByDriverUserIdOrderByCreatedAtDesc(String driverUserId);
 
-    // All pending jobs (for driver feed)
+    // Pending jobs (paginated — prevents unbounded list at scale)
+    Page<Booking> findByStatusOrderByCreatedAtDesc(String status, Pageable pageable);
     List<Booking> findByStatusOrderByCreatedAtDesc(String status);
 
-    // Admin — all bookings
+    // Admin — all bookings (paginated)
+    Page<Booking> findAllByOrderByCreatedAtDesc(Pageable pageable);
     List<Booking> findAllByOrderByCreatedAtDesc();
 
     // Counts
@@ -27,7 +32,6 @@ public interface BookingRepository extends MongoRepository<Booking, String> {
     long countByDriverUserId(String driverUserId);
 
     // ── Aggregation: sum appCut for delivered bookings ──
-    // Runs entirely on MongoDB — no Java-side iteration over all docs.
     @Aggregation(pipeline = {
         "{ $match: { status: ?0 } }",
         "{ $group: { _id: null, total: { $sum: '$appCut' } } }"

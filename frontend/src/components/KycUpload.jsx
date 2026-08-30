@@ -1,6 +1,7 @@
 // src/components/KycUpload.jsx
 import { useState, useEffect, useRef } from "react";
 import { authHeaders } from "../api/sessionStorage";
+import { compressImage } from "../utils/imageCompress";
 
 const VEHICLE_TYPES = [
   { id: "bike",          label: "Bike (2-Wheeler)"      },
@@ -17,16 +18,6 @@ const STATUS_CONFIG = {
   REJECTED:      { color: "bg-red-100 text-red-800",       icon: "❌", label: "Action required"  },
   RESUBMIT:      { color: "bg-orange-100 text-orange-800", icon: "🔄", label: "Resubmit required" },
 };
-
-// Convert file to base64
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload  = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function UploadBox({ label, required, value, onChange, hint }) {
   const inputRef = useRef(null);
@@ -62,8 +53,9 @@ function UploadBox({ label, required, value, onChange, hint }) {
         onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
-          if (file.size > 5 * 1024 * 1024) { alert("File too large. Max 5MB."); return; }
-          const b64 = await fileToBase64(file);
+          if (file.size > 10 * 1024 * 1024) { alert("File too large. Max 10MB before compression."); return; }
+          // Compress on client: ~5MB photos → ~400KB JPEG
+          const b64 = await compressImage(file);
           onChange(b64);
           e.target.value = "";
         }}/>
