@@ -5,12 +5,8 @@
 ### Backend
 | # | Task | Priority | Notes |
 |---|------|----------|-------|
-| B1 | Move KYC images from Base64 in docs → GridFS | Critical | Will hit 16MB doc limit; GridFS configured but unused |
-| B2 | Add rate limiting to auth endpoints | High | Brute-force protection needed |
-| B3 | Add KYC status check to `BookingService.accept()` | High | UI-only check; server should reject unverified drivers |
+| B1 | Move KYC images from Base64 in docs → GridFS | Critical | Compression helps but GridFS still needed for many docs |
 | B4 | Implement token refresh flow | Medium | Currently users must fully re-login when JWT expires |
-| B5 | Add pagination to all list endpoints | High | `findAllByOrderByCreatedAtDesc()` returns unbounded lists |
-| B6 | Client-side image compression before upload | Medium | Phone photos can be 5-15MB; compress to ~1200px, q=0.7 |
 | B7 | Seed rate cards idempotently on startup | Low | Currently created lazily on first fare calc |
 
 ### Frontend

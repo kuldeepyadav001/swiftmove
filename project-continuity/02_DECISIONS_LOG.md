@@ -28,3 +28,7 @@
 | 2026-08-30 | Extracted StatCard, Badge, EmptyState, PublicNavbar → `shared/UI.jsx` | Reduced App.jsx by 88 more lines (1,803 → 1,578 total reduction: 225 lines) | Done |
 | 2026-08-30 | Created `DeliveryDtos` (RequestDeliveryRequest, VerifyOtpRequest, DisputeRequest) | Replaced Map<String,Object>/Map<String,String> in delivery endpoints — no more unchecked casts | Done |
 | 2026-08-30 | Deleted dead `useDistancePrice.js` hook | Not imported anywhere; FareEstimate component handles fare calculation | Done |
+| 2026-08-30 | Added bucket4j rate limiting on auth endpoints | Login: 5/min, Register: 3/min, Forgot-password: 2/min — brute-force/OTP spam protection | Done |
+| 2026-08-30 | Server-side KYC gate on `BookingService.accept()` | Unverified drivers can no longer accept jobs even if UI is bypassed | Done |
+| 2026-08-30 | Added pagination to all list endpoints | Default 50/page, max 100-200 depending on endpoint — prevents OOM at scale | Done |
+| 2026-08-30 | Created client-side image compression utility (`imageCompress.js`) | Phone photos (5-15MB) → ~300-500KB JPEGs — prevents MongoDB 16MB limit, faster mobile uploads | Done |
