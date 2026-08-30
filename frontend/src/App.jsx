@@ -1398,75 +1398,108 @@ function LoginPage({ go, login }) {
       setError(err.message || "Login failed. Please check your credentials.");
     } finally { setLoading(false); }
   };
-if (showForgot) return (
-  <div className="min-h-screen bg-slate-50 flex flex-col">
-    <PublicNavbar go={go}/>
-    <div className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
-      <ForgotPassword
-        onBack={() => setShowForgot(false)}
-        onSuccess={() => { setShowForgot(false); alert("Password reset! Please log in."); }}
-      />
-    </div>
-  </div>
-);
-  return (
+
+  if (showForgot) return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <PublicNavbar go={go} />
+      <PublicNavbar go={go}/>
       <div className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-            <div className="bg-blue-700 px-8 py-6">
-              <h1 className="text-2xl font-extrabold text-white">Welcome back</h1>
-              <p className="text-blue-200 text-sm mt-1">Log in to your SwiftMove account</p>
+        <ForgotPassword
+          onBack={() => setShowForgot(false)}
+          onSuccess={() => { setShowForgot(false); alert("Password reset! Please log in."); }}
+        />
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <PublicNavbar go={go} />
+      <div className="flex-1 flex">
+        {/* Left panel - branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden items-center justify-center p-12">
+          <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-400 rounded-full blur-3xl opacity-20" />
+          <div className="relative max-w-md">
+            <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
+              <IC.Truck className="w-7 h-7 text-white" />
             </div>
-            <div className="p-8">
-              <div className="flex rounded-xl bg-slate-100 p-1 mb-6">
-                {["shipper", "driver"].map((r) => (
-                  <button key={r} onClick={() => setRole(r)}
-                    className={`flex-1 py-2.5 rounded-lg text-sm font-bold capitalize transition-all
-                      ${role === r ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-                    {r}
+            <h2 className="text-4xl font-extrabold text-white leading-tight">Move goods<br/>with confidence.</h2>
+            <p className="mt-4 text-blue-100 text-lg leading-relaxed">Track your shipments in real-time, connect with verified drivers, and get your goods delivered safely.</p>
+            <div className="mt-10 flex gap-8">
+              <div>
+                <p className="text-3xl font-extrabold text-white">10K+</p>
+                <p className="text-sm text-blue-200 mt-1">Deliveries</p>
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-white">22</p>
+                <p className="text-sm text-blue-200 mt-1">Cities</p>
+              </div>
+              <div>
+                <p className="text-3xl font-extrabold text-white">4.8★</p>
+                <p className="text-sm text-blue-200 mt-1">Rating</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right panel - form */}
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
+          <div className="w-full max-w-md">
+            <div className="mb-8">
+              <h1 className="text-3xl font-extrabold text-slate-900">Welcome back</h1>
+              <p className="text-slate-500 mt-2">Log in to your SwiftMove account</p>
+            </div>
+
+            <div className="flex rounded-xl bg-slate-100 p-1 mb-8">
+              {["shipper", "driver"].map((r) => (
+                <button key={r} onClick={() => setRole(r)}
+                  className={`flex-1 py-3 rounded-lg text-sm font-bold capitalize transition-all
+                    ${role === r ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                  {r}
+                </button>
+              ))}
+            </div>
+
+            {error && (
+              <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
+            )}
+
+            <div className="space-y-5">
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="you@example.com"
+                  className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Password</label>
+                <div className="relative">
+                  <input type={showPass ? "text" : "password"} value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="••••••••"
+                    className="w-full px-4 py-3.5 pr-11 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all" />
+                  <button onClick={() => setShowPass(!showPass)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                    <IC.Eye open={showPass} />
                   </button>
-                ))}
-              </div>
-              {error && (
-                <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
-              )}
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Email address</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="you@example.com"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm" />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Password</label>
-                  <div className="relative">
-                    <input type={showPass ? "text" : "password"} value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleSubmit()} placeholder="••••••••"
-                      className="w-full px-4 py-3 pr-11 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm" />
-                    <button onClick={() => setShowPass(!showPass)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                      <IC.Eye open={showPass} />
-                    </button>
-                  </div>
-                  <div className="flex justify-end mt-1.5">
-                    <button onClick={() => setShowForgot(true)} className="text-xs text-blue-600 hover:text-blue-800 font-semibold">Forgot password?</button>
-                  </div>
+                <div className="flex justify-end mt-2">
+                  <button onClick={() => setShowForgot(true)} className="text-xs text-blue-600 hover:text-blue-800 font-bold">Forgot password?</button>
                 </div>
               </div>
-              <button onClick={handleSubmit} disabled={loading || !email || !password}
-                className="w-full mt-6 py-3.5 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-sm">
-                {loading ? (
-                  <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in…</>
-                ) : `Log in as ${role}`}
-              </button>
-              <p className="text-center text-sm text-slate-500 mt-5">
-                No account?{" "}
-                <button onClick={() => go("register")} className="text-blue-600 font-bold hover:text-blue-800">Create one free</button>
-              </p>
             </div>
+
+            <button onClick={handleSubmit} disabled={loading || !email || !password}
+              className="w-full mt-8 py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-sm">
+              {loading ? (
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Signing in…</>
+              ) : `Log in as ${role}`}
+            </button>
+
+            <p className="text-center text-sm text-slate-500 mt-8">
+              Don't have an account?{" "}
+              <button onClick={() => go("register")} className="text-blue-600 font-bold hover:text-blue-800">Create one free</button>
+            </p>
           </div>
         </div>
       </div>
@@ -1498,92 +1531,126 @@ function RegisterPage({ go, login }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <PublicNavbar go={go} />
-      <div className="flex-1 flex items-center justify-center px-6 pt-24 pb-12">
-        <div className="w-full max-w-md">
-          {step === 1 && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-              <div className="bg-blue-700 px-8 py-6">
-                <h1 className="text-2xl font-extrabold text-white">Create your account</h1>
-                <p className="text-blue-200 text-sm mt-1">Join SwiftMove — free to start</p>
-              </div>
-              <div className="p-8">
-                <p className="text-sm font-semibold text-slate-700 mb-3">I want to join as a…</p>
-                <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="flex-1 flex">
+        {/* Left panel - branding */}
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-blue-800 relative overflow-hidden items-center justify-center p-12">
+          <div className="absolute -top-20 -right-20 w-80 h-80 bg-blue-500 rounded-full blur-3xl opacity-30" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-cyan-400 rounded-full blur-3xl opacity-20" />
+          <div className="relative max-w-md">
+            <div className="w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center mb-8 backdrop-blur-sm">
+              <IC.Shield className="w-7 h-7 text-white" />
+            </div>
+            <h2 className="text-4xl font-extrabold text-white leading-tight">Join 500+<br/>businesses today.</h2>
+            <p className="mt-4 text-blue-100 text-lg leading-relaxed">Start shipping with verified drivers, real-time tracking, and flexible payments.</p>
+            <div className="mt-10 space-y-4">
+              {[["Free to start", "No setup fees or monthly charges"], ["Verified drivers", "KYC-checked with Aadhar & PAN"], ["24/7 support", "Always here when you need us"]].map(([t, d]) => (
+                <div key={t} className="flex items-start gap-3">
+                  <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <IC.Check className="w-3 h-3 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-white text-sm">{t}</p>
+                    <p className="text-blue-200 text-xs mt-0.5">{d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right panel - form */}
+        <div className="flex-1 flex items-center justify-center px-6 py-12">
+          <div className="w-full max-w-md">
+            {step === 1 && (
+              <>
+                <div className="mb-8">
+                  <h1 className="text-3xl font-extrabold text-slate-900">Create account</h1>
+                  <p className="text-slate-500 mt-2">Join SwiftMove — free to start</p>
+                </div>
+
+                <p className="text-sm font-bold text-slate-700 mb-4">I want to join as a…</p>
+                <div className="grid grid-cols-2 gap-4 mb-8">
                   {[
-                    { r: "shipper", label: "Shipper", sub: "Send goods" },
-                    { r: "driver",  label: "Driver",  sub: "Earn by driving" },
-                  ].map(({ r, label, sub }) => (
+                    { r: "shipper", label: "Shipper", sub: "Send goods", icon: IC.Package },
+                    { r: "driver",  label: "Driver",  sub: "Earn by driving", icon: IC.Truck },
+                  ].map(({ r, label, sub, icon: Icon }) => (
                     <button key={r} onClick={() => setRole(r)}
-                      className={`border-2 rounded-xl p-4 text-left transition-all
+                      className={`border-2 rounded-xl p-5 text-left transition-all
                         ${role === r ? "border-blue-600 bg-blue-50" : "border-slate-200 hover:border-slate-300"}`}>
+                      <Icon className={`w-6 h-6 mb-3 ${role === r ? "text-blue-600" : "text-slate-400"}`} />
                       <p className={`text-sm font-bold ${role === r ? "text-blue-700" : "text-slate-800"}`}>{label}</p>
-                      <p className="text-xs text-slate-400">{sub}</p>
-                      {role === r && <div className="mt-2 text-blue-600"><IC.Check /></div>}
+                      <p className="text-xs text-slate-400 mt-0.5">{sub}</p>
                     </button>
                   ))}
                 </div>
+
                 <button onClick={() => setStep(2)}
-                  className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 text-sm flex items-center justify-center gap-2">
+                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 text-sm flex items-center justify-center gap-2">
                   Continue as {role} <IC.Arrow />
                 </button>
-                <p className="text-center text-sm text-slate-500 mt-5">
+
+                <p className="text-center text-sm text-slate-500 mt-8">
                   Already have an account?{" "}
                   <button onClick={() => go("login")} className="text-blue-600 font-bold hover:text-blue-800">Log in</button>
                 </p>
-              </div>
-            </div>
-          )}
-          {step === 2 && (
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
-              <div className="bg-blue-700 px-8 py-6">
-                <button onClick={() => setStep(1)} className="text-blue-300 hover:text-white text-xs font-semibold mb-2 transition-colors">
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <button onClick={() => setStep(1)} className="text-sm text-blue-600 hover:text-blue-800 font-bold mb-6 transition-colors">
                   ← Change role
                 </button>
-                <h1 className="text-2xl font-extrabold text-white">Your details</h1>
-                <p className="text-blue-200 text-sm mt-1">Registering as <span className="font-bold text-white capitalize">{role}</span></p>
-              </div>
-              <div className="p-8 space-y-4">
-                {error && (
-                  <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
-                )}
-                {[
-                  ["name",     "Full name",       "text",     "Priya Sharma"],
-                  ["email",    "Email address",   "email",    "priya@example.com"],
-                  ["phone",    "Mobile number",   "tel",      "9876543210"],
-                  ["password", "Password",        "password", "Min. 8 characters"],
-                ].map(([k, l, t, p]) => (
-                  <div key={k}>
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">{l}</label>
-                    <div className="relative">
-                      <input type={k === "password" ? (showPass ? "text" : "password") : t}
-                        value={form[k]} onChange={(e) => up(k, e.target.value)} placeholder={p}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm" />
-                      {k === "password" && (
-                        <button onClick={() => setShowPass(!showPass)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
-                          <IC.Eye open={showPass} />
-                        </button>
-                      )}
+                <div className="mb-8">
+                  <h1 className="text-3xl font-extrabold text-slate-900">Your details</h1>
+                  <p className="text-slate-500 mt-2">Registering as <span className="font-bold text-blue-600 capitalize">{role}</span></p>
+                </div>
+
+                <div className="space-y-5">
+                  {error && (
+                    <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium">{error}</div>
+                  )}
+                  {[
+                    ["name",     "Full name",       "text",     "Priya Sharma"],
+                    ["email",    "Email address",   "email",    "priya@example.com"],
+                    ["phone",    "Mobile number",   "tel",      "9876543210"],
+                    ["password", "Password",        "password", "Min. 8 characters"],
+                  ].map(([k, l, t, p]) => (
+                    <div key={k}>
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">{l}</label>
+                      <div className="relative">
+                        <input type={k === "password" ? (showPass ? "text" : "password") : t}
+                          value={form[k]} onChange={(e) => up(k, e.target.value)} placeholder={p}
+                          className="w-full px-4 py-3.5 rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none text-sm transition-all" />
+                        {k === "password" && (
+                          <button onClick={() => setShowPass(!showPass)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                            <IC.Eye open={showPass} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-                {role === "driver" && (
-                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium text-amber-800">
-                    You will need to upload Aadhar, PAN and commercial license after registration.
-                  </div>
-                )}
-                <button onClick={handleRegister}
-                  disabled={loading || !form.name || !form.email || !form.phone || !form.password}
-                  className="w-full py-3.5 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-sm">
-                  {loading ? (
-                    <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating account…</>
-                  ) : "Create my account"}
-                </button>
-              </div>
-            </div>
-          )}
+                  ))}
+
+                  {role === "driver" && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium text-amber-800">
+                      You will need to upload Aadhar, PAN and commercial license after registration.
+                    </div>
+                  )}
+
+                  <button onClick={handleRegister}
+                    disabled={loading || !form.name || !form.email || !form.phone || !form.password}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-200 flex items-center justify-center gap-2 text-sm">
+                    {loading ? (
+                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Creating account…</>
+                    ) : "Create my account"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
