@@ -8,4 +8,11 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+@layer utilities {
+  /* iPhone safe area for bottom tab bar */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
  
