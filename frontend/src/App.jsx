@@ -832,9 +832,8 @@ function ShipperOrders({ user }) {
           </div>
         ))}
       </div>
-    </div>
-    {/* ── Rating Modal ── */}
-    {ratingFor && (
+      {/* ── Rating Modal ── */}
+      {ratingFor && (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,0.6)" }}
         onClick={() => setRatingFor(null)}>
         <div className="bg-white rounded-2xl p-8 max-w-sm w-full text-center" onClick={e => e.stopPropagation()}>
@@ -861,6 +860,7 @@ function ShipperOrders({ user }) {
         </div>
       </div>
     )}
+    </div>
   );
 }
 
@@ -882,7 +882,7 @@ function DeliveryHandoffPanel({ booking, onUpdate }) {
     const files = Array.from(e.target.files);
     for (const file of files) {
       if (file.size > 15 * 1024 * 1024) { setError("Image too large (max 15MB before compression)"); return; }
-      const { compressImage } = await import("../utils/imageCompress");
+      const { compressImage } = await import("./utils/imageCompress");
       const b64 = await compressImage(file);
       if (b64) setImages(prev => [...prev, b64]);
     }
@@ -1591,122 +1591,201 @@ function RegisterPage({ go, login }) {
 }
 
 function LandingPage({ go }) {
-  const features = [
-    { icon: IC.Map,    title: "Live GPS tracking",  desc: "Real-time tracking from pickup to delivery."     },
-    { icon: IC.Truck,  title: "Verified drivers",   desc: "KYC-verified with Aadhar, PAN and licenses."    },
-    { icon: IC.Wallet, title: "Flexible payments",  desc: "UPI, cards, net banking or cash."               },
-    { icon: IC.Shield, title: "Cargo insurance",    desc: "Optional insurance on every booking."           },
+  const services = [
+    { icon: IC.Truck,  title: "Intra-city delivery", desc: "Same-day goods transport across your city."         },
+    { icon: IC.Map,    title: "Live GPS tracking",    desc: "Real-time location from pickup to drop-off."        },
+    { icon: IC.Shield, title: "Verified drivers",     desc: "KYC-verified with Aadhar, PAN, and licenses."       },
+    { icon: IC.Wallet, title: "Flexible payments",    desc: "UPI, cards, net banking, or cash on delivery."       },
+    { icon: IC.Package,title: "All vehicle types",    desc: "Bike, three-wheeler, Tata Ace, pickup, large truck." },
+    { icon: IC.Check,  title: "OTP delivery proof",   desc: "6-digit code confirms safe handoff every time."      },
+  ];
+  const steps = [
+    { num: "01", title: "Book",    desc: "Enter pickup & drop, choose your vehicle."        },
+    { num: "02", title: "Match",   desc: "A verified driver accepts your request."           },
+    { num: "03", title: "Track",   desc: "Watch your shipment move in real-time on the map."  },
+    { num: "04", title: "Deliver", desc: "Driver uploads proof. You confirm with OTP."       },
+    { num: "05", title: "Rate",    desc: "Rate your experience. Help the community grow."     },
   ];
   return (
     <div className="min-h-screen bg-white">
       <PublicNavbar go={go} />
-      <section className="pt-32 pb-20 px-6 bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-16">
-          <div className="flex-1 text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-              Now live in beta
-            </div>
-            <h1 className="text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight mb-6">
-              India's smartest<br />
-              <span className="text-blue-700">logistics platform</span>
+
+      {/* Hero */}
+      <section className="relative pt-28 pb-20 px-6 bg-gradient-to-br from-blue-50 via-white to-slate-50 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-40" />
+        <div className="absolute -bottom-20 -left-20 w-72 h-72 bg-cyan-100 rounded-full blur-3xl opacity-30" />
+        <div className="relative max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full border border-blue-100 mb-6">
+              <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+              Trusted by 500+ businesses
+            </span>
+            <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight">
+              Move goods<br/>
+              <span className="text-blue-600">anywhere, anytime.</span>
             </h1>
-            <p className="text-lg text-slate-500 max-w-xl mb-10 leading-relaxed">
-              On-demand goods transport with a verified driver network. Book, track and pay — all in one place.
+            <p className="mt-4 text-slate-600 text-lg max-w-md">
+              SwiftMove connects you with verified drivers for fast, reliable intra-city logistics. Book, track, and confirm — all in one place.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-              <button onClick={() => go("register")}
-                className="flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-200 text-base">
-                Create free account <IC.Arrow />
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button onClick={() => go("register")} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow-lg shadow-blue-200 transition-all hover:scale-[1.02]">
+                Get Started →
               </button>
-              <button onClick={() => go("login")}
-                className="flex items-center justify-center border-2 border-slate-300 hover:border-blue-400 text-slate-700 hover:text-blue-700 font-bold px-8 py-4 rounded-xl transition-all text-base">
-                Log in
+              <button onClick={() => go("login")} className="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-6 py-3 rounded-lg font-semibold transition-all">
+                Login →
               </button>
             </div>
           </div>
-          <div className="flex-1 max-w-md w-full">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl shadow-blue-100 overflow-hidden">
-              <div className="bg-blue-700 px-5 py-4 flex items-center justify-between">
-                <span className="text-white font-bold text-sm">Live shipment</span>
-                <span className="text-xs bg-emerald-400 text-emerald-900 font-bold px-2.5 py-1 rounded-full">● In transit</span>
-              </div>
-              <div className="relative h-40 bg-slate-100 overflow-hidden">
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 160">
-                  <path d="M60 130 Q 160 80 340 30" fill="none" stroke="#1d4ed8" strokeWidth="2.5"
-                    strokeDasharray="8 4" strokeLinecap="round" />
-                  <circle cx="60"  cy="130" r="7" fill="#1d4ed8" />
-                  <circle cx="340" cy="30"  r="7" fill="#16a34a" />
-                  <circle cx="210" cy="78"  r="9" fill="white" stroke="#1d4ed8" strokeWidth="2" />
-                </svg>
-                <div className="absolute bottom-2 left-3 bg-white rounded-lg px-2.5 py-1 shadow text-xs font-semibold">📍 Kanpur</div>
-                <div className="absolute top-2 right-3 bg-white rounded-lg px-2.5 py-1 shadow text-xs font-semibold">📍 Delhi</div>
-              </div>
-              <div className="px-5 py-3 grid grid-cols-3 gap-3 border-b border-slate-100">
-                {[["ETA", "2h 40m"], ["Distance", "420 km"], ["Driver", "4.9 ★"]].map(([l, v]) => (
-                  <div key={l}>
-                    <p className="text-xs text-slate-400">{l}</p>
-                    <p className="text-sm font-bold text-slate-900">{v}</p>
+          <div className="hidden md:block">
+            <div className="bg-white rounded-2xl shadow-2xl shadow-blue-100/50 border border-slate-100 p-6 relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <IC.Map className="w-4 h-4 text-white" />
                   </div>
-                ))}
+                  <span className="font-bold text-slate-900">Live Shipment</span>
+                </div>
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-full">In Transit</span>
               </div>
-              <div className="px-5 py-3 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">RK</div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Rajesh Kumar</p>
-                  <p className="text-xs text-slate-400">Tata Ace · UP32 AB 4821</p>
+              <div className="relative h-44 bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl overflow-hidden">
+                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 200 160">
+                  <path d="M30,130 Q60,40 100,80 T170,30" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeDasharray="6,3" opacity="0.6"/>
+                  <circle cx="30" cy="130" r="6" fill="#22c55e"/>
+                  <circle cx="170" cy="30" r="6" fill="#ef4444"/>
+                  <circle cx="100" cy="80" r="8" fill="#3b82f6" opacity="0.3"/>
+                  <circle cx="100" cy="80" r="4" fill="#3b82f6"/>
+                </svg>
+                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs shadow-sm">
+                  <span className="font-bold text-slate-900">Tata Ace</span> · ₹1,240
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-lg font-extrabold text-slate-900">12 km</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">Distance</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-lg font-extrabold text-slate-900">28 min</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">ETA</p>
+                </div>
+                <div className="bg-slate-50 rounded-lg py-2">
+                  <p className="text-lg font-extrabold text-slate-900">4.9★</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-wider">Driver</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Stats */}
+      <section className="border-y border-slate-100 bg-white">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100">
+          {[["500+","Businesses"],["10,000+","Deliveries"],["22","Cities"],["4.8★","Avg Rating"]].map(([n,l]) => (
+            <div key={l} className="py-8 text-center">
+              <p className="text-2xl font-extrabold text-slate-900">{n}</p>
+              <p className="text-xs text-slate-500 mt-1 uppercase tracking-wider">{l}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Services */}
       <section className="py-20 px-6 bg-slate-50">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-extrabold text-slate-900">Everything logistics needs</h2>
+          <div className="text-center mb-12">
+            <span className="text-blue-600 font-bold text-sm uppercase tracking-wider">What We Offer</span>
+            <h2 className="mt-2 text-3xl font-extrabold text-slate-900">Complete logistics, simplified.</h2>
+            <p className="mt-2 text-slate-500 max-w-md mx-auto">From booking to delivery proof — everything you need in one platform.</p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title}
-                className="bg-white rounded-xl border border-slate-200 p-6 hover:border-blue-300 hover:shadow-lg transition-all group">
-                <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center mb-4 group-hover:bg-blue-700 group-hover:text-white transition-all">
-                  <Icon />
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {services.map(s => (
+              <div key={s.title} className="bg-white rounded-xl p-6 border border-slate-100 hover:border-blue-200 hover:shadow-md transition-all group">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
+                  <s.icon className="w-5 h-5 text-blue-600" />
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2 text-sm">{title}</h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
+                <h3 className="font-bold text-slate-900">{s.title}</h3>
+                <p className="text-sm text-slate-500 mt-1 leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
-      <section className="py-20 px-6 bg-blue-700">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-4xl font-extrabold text-white mb-4">Ready to move smarter?</h2>
-          <p className="text-blue-200 text-lg mb-10">Join thousands of shippers and drivers already using SwiftMove.</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button onClick={() => go("register")}
-              className="bg-white text-blue-700 font-bold px-8 py-4 rounded-xl hover:bg-blue-50 transition-all text-base shadow-xl">
-              Create free account
-            </button>
-            <button onClick={() => go("login")}
-              className="border-2 border-white/40 text-white font-bold px-8 py-4 rounded-xl hover:bg-white/10 transition-all text-base">
-              Log in
-            </button>
+
+      {/* How it works */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <span className="text-blue-600 font-bold text-sm uppercase tracking-wider">How It Works</span>
+            <h2 className="mt-2 text-3xl font-extrabold text-slate-900">Five simple steps.</h2>
+          </div>
+          <div className="grid gap-4">
+            {steps.map(s => (
+              <div key={s.num} className="flex items-start gap-4 p-5 rounded-xl bg-slate-50 hover:bg-blue-50/50 transition-colors border border-transparent hover:border-blue-100">
+                <span className="flex-shrink-0 w-10 h-10 bg-blue-600 text-white font-extrabold rounded-lg flex items-center justify-center text-sm">{s.num}</span>
+                <div>
+                  <h3 className="font-bold text-slate-900">{s.title}</h3>
+                  <p className="text-sm text-slate-500 mt-0.5">{s.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-      <footer className="bg-slate-900 text-slate-400 py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-blue-600 flex items-center justify-center text-white"><IC.Truck /></div>
-            <span className="text-white font-bold">Swift<span className="text-blue-400">Move</span></span>
+
+      {/* CTA */}
+      <section className="py-20 px-6 bg-gradient-to-br from-blue-600 to-blue-800">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2 className="text-3xl font-extrabold text-white">Ready to move?</h2>
+          <p className="mt-3 text-blue-100">Join 500+ businesses already using SwiftMove for their daily logistics.</p>
+          <button onClick={() => go("register")} className="mt-8 bg-white text-blue-600 hover:bg-blue-50 px-8 py-3 rounded-lg font-bold shadow-xl transition-all hover:scale-[1.02]">
+            Start Shipping Today →
+          </button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 text-white py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+            <div>
+              <h4 className="font-extrabold text-lg mb-3">🚚 SwiftMove</h4>
+              <p className="text-slate-400 text-sm leading-relaxed">Fast, reliable intra-city logistics for businesses and individuals across India.</p>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-3">Product</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="hover:text-white cursor-pointer">Shipper App</li>
+                <li className="hover:text-white cursor-pointer">Driver App</li>
+                <li className="hover:text-white cursor-pointer">Admin Console</li>
+                <li className="hover:text-white cursor-pointer">API Access</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-3">Company</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="hover:text-white cursor-pointer">About Us</li>
+                <li className="hover:text-white cursor-pointer">Careers</li>
+                <li className="hover:text-white cursor-pointer">Blog</li>
+                <li className="hover:text-white cursor-pointer">Contact</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm uppercase tracking-wider text-slate-300 mb-3">Legal</h4>
+              <ul className="space-y-2 text-sm text-slate-400">
+                <li className="hover:text-white cursor-pointer">Terms of Service</li>
+                <li className="hover:text-white cursor-pointer">Privacy Policy</li>
+                <li className="hover:text-white cursor-pointer">Refund Policy</li>
+              </ul>
+            </div>
           </div>
-          <p className="text-sm text-slate-500">© {new Date().getFullYear()} SwiftMove.</p>
-          <div className="flex gap-6 text-sm">
-            {["Privacy", "Terms", "Contact"].map((l) => (
-              <a key={l} href="#" className="hover:text-white transition-colors">{l}</a>
-            ))}
+          <div className="border-t border-slate-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-slate-500">© 2026 SwiftMove Logistics. All rights reserved.</p>
+            <div className="flex gap-4 text-sm text-slate-400">
+              <span className="hover:text-white cursor-pointer">Twitter</span>
+              <span className="hover:text-white cursor-pointer">LinkedIn</span>
+              <span className="hover:text-white cursor-pointer">Instagram</span>
+            </div>
           </div>
         </div>
       </footer>
